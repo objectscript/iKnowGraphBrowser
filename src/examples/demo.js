@@ -8,7 +8,7 @@ var data = require("./relatedGraph.json")
 var sigma = require("linkurious")
 require("imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins")
 
-
+var Mustache = require("mustache")
 var _ = require("lodash")
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
           x: Math.random(),
           y: Math.random(),
           size: node.entities.frequency / 1000,
-          color: '#aaa'
+          color: '#aaa',
+          data: node.entities[0]
         })
       }
     });
@@ -62,6 +63,59 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setTimeout(function() {s.stopForceAtlas2()}
       , 2000);
 
+    var tooltipConfig = {
+      node: [{
+        show: 'hovers',
+        hide: 'hovers',
+        cssClass: 'sigma-tooltip',
+        position: 'top',
+        //autoadjust: true,
+        template:
+        '<div class="arrow"></div>' +
+        ' <div class="sigma-tooltip-header">{{label}}</div>' +
+        '  <div class="sigma-tooltip-body">' +
+        '    <table>' +
+        '      <tr><th>frequency</th> <td>{{data.frequency}}</td></tr>' +
+        '      <tr><th>score</th> <td>{{data.score}}</td></tr>' +
+        '      <tr><th>spread</th> <td>{{data.spread}}</td></tr>' +
+        '      <tr><th>value</th> <td>{{data.value}}</td></tr>' +
+        '    </table>' +
+        '  </div>' +
+        '  <div class="sigma-tooltip-footer">Number of connections: {{degree}}</div>',
+        renderer: function(node, template) {
+          // The function context is s.graph
+          node.degree = this.degree(node.id);
+
+          // Returns an HTML string:
+          return Mustache.render(template, node);
+
+          // Returns a DOM Element:
+          //var el = document.createElement('div');
+          //return el.innerHTML = Mustache.render(template, node);
+        }
+      }, {
+        show: 'rightClickNode',
+        cssClass: 'sigma-tooltip',
+        position: 'right',
+        template:
+        '<div class="arrow"></div>' +
+        ' <div class="sigma-tooltip-header">{{label}}</div>' +
+        '  <div class="sigma-tooltip-body">' +
+        '   <p> Context menu for {{data.value}} </p>' +
+        '  </div>' +
+        ' <div class="sigma-tooltip-footer">Number of connections: {{degree}}</div>',
+        renderer: function(node, template) {
+          node.degree = this.degree(node.id);
+          return Mustache.render(template, node);
+        }
+      }],
+      stage: {
+        template:
+        '<div class="arrow"></div>' +
+        '<div class="sigma-tooltip-header"> Menu </div>'
+      }
+};
+  var tooltips = sigma.plugins.tooltips(s, s.renderers[0], tooltipConfig);
     /*var props = {        
         ref: function(browser) {
             // if you reuse this code you should check for workspace to be null on unmount
