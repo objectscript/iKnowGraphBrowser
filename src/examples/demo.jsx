@@ -3,10 +3,12 @@ import * as ReactDOM from 'react-dom';
 
 import { Workspace, WorkspaceProps, DemoDataProvider } from '../index';
 */
-var data = require("./relatedGraph.json")
+import * as data from './relatedGraph.json'
 
-var sigma = require("linkurious")
-require("imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins")
+
+import * as sigma from 'linkurious'
+
+import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins'
 
 var Mustache = require("mustache")
 var _ = require("lodash")
@@ -54,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Instantiate sigma:
-    var s = new sigma({
+    var s = new sigma.sigma({
       graph: g,
       container: 'root'
     });
@@ -115,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '<div class="sigma-tooltip-header"> Menu </div>'
       }
 };
-  var tooltips = sigma.plugins.tooltips(s, s.renderers[0], tooltipConfig);
+  var tooltips = sigma.sigma.plugins.tooltips(s, s.renderers[0], tooltipConfig);
     /*var props = {        
         ref: function(browser) {
             // if you reuse this code you should check for workspace to be null on unmount

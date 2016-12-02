@@ -8,10 +8,11 @@ var npmDir = path.join(__dirname, 'node_modules');
 
 module.exports = {
     entry: {
-        demo: path.join(__dirname, 'src', 'examples', 'demo.js'),        
+        demo: path.join(__dirname, 'src', 'examples', 'demo.jsx'),
+        reactDemo: path.join(__dirname, 'src', 'examples', 'reactDemo.jsx'),
     },
     resolve: {
-        extensions: ['', '.ts', '.tsx', '.webpack.js', '.web.js', '.js'],
+        extensions: ['', '.webpack.js', '.web.js', '.js', '.jsx'],
         alias: {        
         },
     },
@@ -24,10 +25,24 @@ module.exports = {
             {test: /\.jpe?g$/, loader: 'url-loader?mimetype=image/jpeg'},
             {test: /\.gif$/, loader: 'url-loader?mimetype=image/gif'},
             {test: /\.png$/, loader: 'url-loader?mimetype=image/png'},
+            {
+                test: /\.jsx$/,
+                exclude: /(node_modules)/,
+                loader: 'babel-loader',
+                query: {
+                    presets: ['es2015', 'react', 'stage-0']
+                }
+            },
         ],
     },
     plugins: [
         new HtmlWebpackPlugin({
+            title: 'iKnowBrowser react demo',
+            chunks: ['commons', 'reactDemo'],
+            template: path.join(__dirname, 'src', 'examples', 'template.ejs'),
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'demo.html',
             title: 'iKnowBrowser demo',
             chunks: ['commons', 'demo'],
             template: path.join(__dirname, 'src', 'examples', 'template.ejs'),

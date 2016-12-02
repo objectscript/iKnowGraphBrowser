@@ -8,7 +8,7 @@ module.exports = {
         iKnowBrowser: path.join(__dirname, 'src', 'index.js'),
     },
     resolve: {
-        extensions: ['', '.ts', '.tsx', '.webpack.js', '.web.js', '.js', '.min.js'],
+        extensions: ['', '.webpack.js', '.web.js', '.js', '.jsx', '.min.js'],
         alias: {
           
         },
@@ -22,6 +22,14 @@ module.exports = {
             {test: /\.jpe?g$/, loader: 'url-loader?mimetype=image/jpeg'},
             {test: /\.gif$/, loader: 'url-loader?mimetype=image/gif'},
             {test: /\.png$/, loader: 'url-loader?mimetype=image/png'},
+            {
+                test: /\.js$/,
+                exclude: /(node_modules)/,
+                loader: 'babel-loader',
+                query: {
+                    presets: ['es2015', 'react', 'stage-0']
+                }
+            },
         ],
     },
     plugins: [],
