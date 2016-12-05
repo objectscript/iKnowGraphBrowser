@@ -34,7 +34,7 @@ export default class ScenarioSelector extends React.Component {
     };
 
     onGo = () => {
-        this.setState({msg: "Fetching data..."});
+        this.setState({msg: "Fetching data..."});0
         fetch(this.state.scenario + '/' + this.state.seed).
             then(result => result.json()).
             then(result => {
@@ -49,7 +49,7 @@ export default class ScenarioSelector extends React.Component {
                 "id": 0,
                 "label": this.state.seed,
                 "type": "entity",
-                "entities": [
+                /*"entities": [
                     {
                         "frequency": -1,
                         "id": -1,
@@ -57,7 +57,7 @@ export default class ScenarioSelector extends React.Component {
                         "spread": -1,
                         "value": this.state.seed
                     }
-                ],
+                ],*/
             }
         );
         return graph;
