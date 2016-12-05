@@ -2,7 +2,7 @@ import React from 'react'
 import GraphViz from './GraphViz'
 import SelectedTable from './SelectedTable'
 
-export default class GraphWorkspace extends React.Component {
+export default class GraphWorkspace extends React.PureComponent {
     propTypes: {
         graph: React.PropTypes.any.isRequired
     };

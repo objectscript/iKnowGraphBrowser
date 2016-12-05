@@ -35,7 +35,7 @@ export default class GraphViz extends React.Component {
                 //this.sigma.kill();
             }
             this.prepareGraph(this.sigma.graph, this.props.graph);
-            this.sigma.refresh();
+            //this.sigma.refresh();
             this.layoutGraph(this.sigma);
             this.addTooltip(this.sigma);
         } else {
@@ -98,7 +98,7 @@ export default class GraphViz extends React.Component {
 
     layoutGraph(s) {
         var fa = s.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true});
-        window.setTimeout(function() {s.stopForceAtlas2()}
+        window.setTimeout(function() {s.stopForceAtlas2(); s.killForceAtlas2();}
             , 2000);
     }
 

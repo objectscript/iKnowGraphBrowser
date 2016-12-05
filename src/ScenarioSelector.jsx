@@ -30,8 +30,8 @@ export default class ScenarioSelector extends React.Component {
                                     </select>
                                 </div>
                                 <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
-                                <div class="text-xs-center">{this.state.msg}</div>
-                                {this.state.fetching ? <progress class="progress" value="50" max="100" aria-describedby="example-caption-3"></progress> : undefined}
+                                <div className="text-xs-center">{this.state.msg}</div>
+                                {this.state.fetching ? <progress className="progress" value="50" max="100"></progress> : undefined}
                             </form>
                     </div>
                 </div>
