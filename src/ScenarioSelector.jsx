@@ -7,19 +7,34 @@ export default class ScenarioSelector extends React.Component {
         scenario: "similar",
         seed: "disease",
         graph: undefined,
+        fetching: false,
         msg: "",
     }
 
     render() {
         return (
             <div>
-                <input type="text" onChange={this.onTextChange} value={this.state.seed}/>
-                <select name="scenario" onChange={this.onScenarioChange}>
-                    <option value="similar">similar</option>
-                    <option value="related">related</option>
-                </select>
-                <input type="button" onClick={this.onGo} value="Go" />
-                <p>{this.state.msg}</p>
+                <div className="card">
+                    <div className="card-block">
+                        <h4 className="card-title">Scenario Selection</h4>
+                            <form className="form-inline">
+                                <div className="form-group">
+                                    <label htmlFor="seedText">Seed string</label>
+                                    <input id="seedText" className="form-control" type="text" onChange={this.onTextChange} value={this.state.seed}/>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="scenario">Scenario</label>
+                                    <select id="scenario" className="form-control" onChange={this.onScenarioChange}>
+                                        <option value="similar">similar</option>
+                                        <option value="related">related</option>
+                                    </select>
+                                </div>
+                                <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
+                                <div class="text-xs-center">{this.state.msg}</div>
+                                {this.state.fetching ? <progress class="progress" value="50" max="100" aria-describedby="example-caption-3"></progress> : undefined}
+                            </form>
+                    </div>
+                </div>
                 <Filter graph={this.state.graph} />
             </div>
         );
@@ -34,11 +49,11 @@ export default class ScenarioSelector extends React.Component {
     };
 
     onGo = () => {
-        this.setState({msg: "Fetching data..."});0
+        this.setState({msg: 'Fetching data...', fetching: true});0
         fetch(this.state.scenario + '/' + this.state.seed).
             then(result => result.json()).
             then(result => {
-                this.setState({msg: "Fetching done.", graph: this.prepareGraph(result.graph)});
+                this.setState({msg: "Fetching done.", fetching: false, graph: this.prepareGraph(result.graph)});
             }
         )
     }

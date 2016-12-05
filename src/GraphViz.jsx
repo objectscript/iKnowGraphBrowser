@@ -105,11 +105,11 @@ export default class GraphViz extends React.Component {
     addTooltip(s) {
         var tooltipConfig = {
             node: [{
-                show: 'hovers',
-                hide: 'hovers',
-                cssClass: 'sigma-tooltip',
+                show: 'clickNode',
+                // hide: 'hovers',
+                cssClass: 'card',
                 position: 'top',
-                autoadjust: true,
+                // autoadjust: true,
                 template:
                 '<div class="arrow"></div>' +
                 ' <div class="sigma-tooltip-header">{{label}}</div>' +
