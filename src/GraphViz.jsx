@@ -7,12 +7,13 @@ import * as Mustache from 'mustache'
 import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins'
 
 
-export default class GraphViz extends React.Component {
+export default class GraphViz extends React.PureComponent {
     propTypes: {
         graph: React.PropTypes.any.isRequired
     };
     state = {
-        selectedNodes: []
+        selectedNodes: [],
+        sizeParam: 'frequency'
     };
 
     emptyGraph() {
@@ -21,6 +22,12 @@ export default class GraphViz extends React.Component {
             edges: []
         };
     }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
+    }
+
+
 
     createGraph = (element) => {
         if (element) {
@@ -38,6 +45,7 @@ export default class GraphViz extends React.Component {
             }
             this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
             this.prepareGraph(this.sigma.graph, this.props.graph);
+            this.updateSizes();
             //this.sigma.refresh();
             this.layoutGraph(this.sigma);
             this.addTooltip(this.sigma);
@@ -48,6 +56,21 @@ export default class GraphViz extends React.Component {
 
     componentWillReceiveProps(nextProps) {
         if (this.sigma && this.sigma.isForceAtlas2Running()) this.sigma.killForceAtlas2();
+    }
+
+    updateSizes() {
+        let paramFn;
+        switch (this.state.sizeParam) {
+            case 'frequency': paramFn = node => node.data && node.data.frequency ? node.data.frequency : 1; break;
+            case 'spread': paramFn = node => node.data && node.data.spread ? node.data.spread : 1; break;
+            case 'score': paramFn = node => node.data && node.data.score ? node.data.score : 1; break;
+        }
+        const stat = this.computeNormalizeCoeff(this.sigma.graph.nodes(), paramFn);
+        const {mn: mnStat, mx: mxStat} = stat;
+        this.sigma.graph.nodes().forEach(node => {
+            node.size = node.data ? this.normalizeCoeff(paramFn(node), mnStat, mxStat, 100) : 120
+        });
+        this.sigma.refresh();
     }
 
     computeNormalizeCoeff(nodes, accessFn) {
@@ -67,16 +90,15 @@ export default class GraphViz extends React.Component {
     }
 
     prepareGraph(g, srcData) {
-
-        const stat = this.computeNormalizeCoeff(srcData.nodes, node => node.entities ? node.entities[0].frequency : 1);
-        const {mn: mnStat, mx: mxStat} = stat;
+        // const stat = this.computeNormalizeCoeff(srcData.nodes, node => node.entities ? node.entities[0].frequency : 1);
+        // const {mn: mnStat, mx: mxStat} = stat;
         _.each(srcData.nodes, node => {
             g.addNode({
                 id: node.id,
                 label: node.label,
                 x: Math.random(),
                 y: Math.random(),
-                size: node.entities ? this.normalizeCoeff(node.entities[0].frequency, mnStat, mxStat, 100) : 120,
+                // size: node.entities ? this.normalizeCoeff(node.entities[0].frequency, mnStat, mxStat, 100) : 120,
                 type: 'circle', //could be linkurious-specific
                 color: node.id == 0 ? '#FFFFFF' : '#5B9BD5',
                 borderSize: node.id == 0 ? 2 : 0,
@@ -171,6 +193,34 @@ export default class GraphViz extends React.Component {
         return (
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.createGraph(element)} />
+                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, top: 0, width: '150px', height: '100px'}}>
+                    <form>
+                        <div className="input-group input-group-sm">
+                            <label className="form-check-label">
+                                <input id="param-frequency" name="nodeSizeParam" type="radio" value="frequency" className="form-check-input"
+                                        checked={this.state.sizeParam == 'frequency'}
+                                        onChange={() => this.setState({sizeParam: 'frequency'})}/>
+                                frequency
+                            </label>
+                        </div>
+                        <div className="input-group input-group-sm">
+                            <label className="form-check-label">
+                                <input id="param-spread" name="nodeSizeParam" type="radio" value="spread" className="form-check-input"
+                                       checked={this.state.sizeParam == 'spread'}
+                                       onChange={() => this.setState({sizeParam: 'spread'})}/>
+                                spread
+                            </label>
+                        </div>
+                        <div className="input-group input-group-sm">
+                            <label className="form-check-label">
+                                <input id="param-score" name="nodeSizeParam" type="radio" value="score" className="form-check-input"
+                                       checked={this.state.sizeParam == 'score'}
+                                       onChange={() => this.setState({sizeParam: 'score'})}/>
+                                score
+                            </label>
+                        </div>
+                    </form>
+                </div>
             </div>
         );
     }

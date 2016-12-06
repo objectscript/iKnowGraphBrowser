@@ -13,29 +13,31 @@ export default class ScenarioSelector extends React.Component {
 
     render() {
         return (
-            <div>
-                <div className="card">
-                    <div className="card-block">
-                        <h4 className="card-title">Scenario Selection</h4>
-                            <form className="form-inline">
-                                <div className="form-group">
-                                    <label htmlFor="seedText">Seed string</label>
-                                    <input id="seedText" className="form-control" type="text" onChange={this.onTextChange} value={this.state.seed}/>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="scenario">Scenario</label>
-                                    <select id="scenario" className="form-control" onChange={this.onScenarioChange}>
-                                        <option value="related">related</option>
-                                        <option value="similar">similar</option>
-                                    </select>
-                                </div>
-                                <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
-                                <div className="text-xs-center">{this.state.msg}</div>
-                                {this.state.fetching ? <progress className="progress" value="50" max="100"></progress> : undefined}
-                            </form>
+            <div className="container-fluid">
+                <div className="row">
+                    <div className="card col-md-12">
+                        <div className="card-block">
+                            <h4 className="card-title">Scenario Selection</h4>
+                                <form className="form-inline">
+                                    <div className="form-group">
+                                        <label htmlFor="seedText">Seed string</label>
+                                        <input id="seedText" className="form-control" type="text" onChange={this.onTextChange} value={this.state.seed}/>
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="scenario">Scenario</label>
+                                        <select id="scenario" className="form-control" onChange={this.onScenarioChange}>
+                                            <option value="related">related</option>
+                                            <option value="similar">similar</option>
+                                        </select>
+                                    </div>
+                                    <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
+                                    {/*<div className="text-xs-center">{this.state.msg}</div>*/}
+                                    {this.state.fetching ? <progress className="progress" value="50" max="100"></progress> : undefined}
+                                </form>
+                        </div>
                     </div>
+                    <Filter graph={this.state.graph} />
                 </div>
-                <Filter graph={this.state.graph} />
             </div>
         );
     }

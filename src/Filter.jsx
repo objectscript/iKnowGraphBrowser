@@ -44,31 +44,35 @@ export default class Filter extends React.PureComponent {
 
     render() {
         return (
-            <div>
-                <div className="card">
-                    <div className="card-block">
-                        <h4 className="card-title">Filter</h4>
-                        <form className="form-inline">
-                            <div className="form-group">
-                                <label htmlFor="frequency">Min Frequency</label>
-                                <input id="frequency" className="form-control" type="text" value={this.state.minFrequency}
-                                       onChange={e => {this.setState({minFrequency: parseFloat(e.target.value)}); }} />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="spread">Min Spread</label>
-                                <input id="spread" className="form-control" type="text" value={this.state.minSpread}
-                                       onChange={e => {this.setState({minSpread: parseFloat(e.target.value)}); }} />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="score">Min Score</label>
-                                <input id="score" className="form-control" type="text" value={this.state.minScore}
-                                       onChange={e => {this.setState({minScore: parseFloat(e.target.value)}); }} />
-                            </div>
-                            <input type="button" className="btn btn-primary" onClick={this.updateFilter} value="Update graph"/>
-                        </form>
+            <div className="row">
+                <div className="col-md-2">
+                    <div className="card">
+                        <div className="card-block">
+                            <h4 className="card-title">Filter</h4>
+                            <form>
+                                <div className="form-group">
+                                    <label htmlFor="frequency">Min Frequency</label>
+                                    <input id="frequency" className="form-control" type="text" value={this.state.minFrequency}
+                                           onChange={e => {this.setState({minFrequency: parseFloat(e.target.value)}); }} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="spread">Min Spread</label>
+                                    <input id="spread" className="form-control" type="text" value={this.state.minSpread}
+                                           onChange={e => {this.setState({minSpread: parseFloat(e.target.value)}); }} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="score">Min Score</label>
+                                    <input id="score" className="form-control" type="text" value={this.state.minScore}
+                                           onChange={e => {this.setState({minScore: parseFloat(e.target.value)}); }} />
+                                </div>
+                                <input type="button" className="btn btn-primary" onClick={this.updateFilter} value="Update graph"/>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                <GraphWorkspace graph={this.state.graph}/>
+                <div className="col-md-10">
+                    <GraphWorkspace graph={this.state.graph}/>
+                </div>
             </div>);
     }
 }
