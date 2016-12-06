@@ -27,13 +27,16 @@ export default class GraphViz extends React.Component {
             if (!this.sigma) {
                 this.sigma = new sigmajs.sigma({
                     graph: this.emptyGraph(),
-                    container: element
+                    container: element,
+                    settings: {
+                    }
                 });
             } else {
                 this.sigma.graph.clear();
                 this.sigma.refresh();
                 //this.sigma.kill();
             }
+            this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
             this.prepareGraph(this.sigma.graph, this.props.graph);
             //this.sigma.refresh();
             this.layoutGraph(this.sigma);
@@ -71,7 +74,7 @@ export default class GraphViz extends React.Component {
                 label: node.label,
                 x: Math.random(),
                 y: Math.random(),
-                size: node.entities ? this.normalizeCoeff(node.entities[0].frequency, mnStat, mxStat, 100) : 100,
+                size: node.entities ? this.normalizeCoeff(node.entities[0].frequency, mnStat, mxStat, 100) : 120,
                 type: 'circle', //could be linkurious-specific
                 color: node.id == 0 ? '#FFFFFF' : '#5B9BD5',
                 borderSize: node.id == 0 ? 2 : 0,
@@ -97,9 +100,9 @@ export default class GraphViz extends React.Component {
     }
 
     layoutGraph(s) {
-        var fa = s.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true});
+        var fa = s.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true, startingIterations: 5, iterationsPerRender: 5});
         window.setTimeout(function() {s.stopForceAtlas2(); s.killForceAtlas2();}
-            , 2000);
+            , 3000);
     }
 
     addTooltip(s) {
