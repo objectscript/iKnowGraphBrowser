@@ -4,7 +4,7 @@ import Filter from './Filter'
 export default class ScenarioSelector extends React.Component {
 
     state = {
-        scenario: "similar",
+        scenario: "related",
         seed: "disease",
         graph: undefined,
         fetching: false,
@@ -25,8 +25,8 @@ export default class ScenarioSelector extends React.Component {
                                 <div className="form-group">
                                     <label htmlFor="scenario">Scenario</label>
                                     <select id="scenario" className="form-control" onChange={this.onScenarioChange}>
-                                        <option value="similar">similar</option>
                                         <option value="related">related</option>
+                                        <option value="similar">similar</option>
                                     </select>
                                 </div>
                                 <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>

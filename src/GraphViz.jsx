@@ -46,7 +46,9 @@ export default class GraphViz extends React.Component {
         }
     }
 
-
+    componentWillReceiveProps(nextProps) {
+        if (this.sigma && this.sigma.isForceAtlas2Running()) this.sigma.killForceAtlas2();
+    }
 
     computeNormalizeCoeff(nodes, accessFn) {
         //this is not efficient for compute time
@@ -108,8 +110,10 @@ export default class GraphViz extends React.Component {
     addTooltip(s) {
         var tooltipConfig = {
             node: [{
-                show: 'clickNode',
+                //show: 'clickNode',
                 // hide: 'hovers',
+                show: 'hovers',
+                hide: 'hovers',
                 cssClass: 'card',
                 position: 'top',
                 // autoadjust: true,
