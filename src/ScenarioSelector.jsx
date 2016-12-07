@@ -18,7 +18,7 @@ export default class ScenarioSelector extends React.Component {
                     <div className="card col-md-12">
                         <div className="card-block">
                             <h4 className="card-title">Scenario Selection</h4>
-                                <form className="form-inline">
+                                <form className="form-inline" onSubmit={(e) => {this.onGo(); e.preventDefault();}}>
                                     <div className="form-group">
                                         <label htmlFor="seedText">Seed string</label>
                                         <input id="seedText" className="form-control" type="text" onChange={this.onTextChange} value={this.state.seed}/>
