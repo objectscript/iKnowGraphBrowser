@@ -140,19 +140,15 @@ export default class GraphViz extends React.PureComponent {
                 position: 'top',
                 // autoadjust: true,
                 template:
-                '<div class="arrow"></div>' +
-                ' <div class="sigma-tooltip-header">{{label}}</div>' +
-                '  <div class="sigma-tooltip-body">' +
-                '    <table>' +
+                ' <div class="card-block"><h4 class="card-title">{{label}}</h4>' +
+                '    <table class="table table-sm">' +
                 '      <tr><th>id</th> <td>{{id}}</td></tr>' +
                 '      <tr><th>frequency</th> <td>{{data.frequency}}</td></tr>' +
                 '      <tr><th>score</th> <td>{{data.score}}</td></tr>' +
                 '      <tr><th>spread</th> <td>{{data.spread}}</td></tr>' +
-                '      <tr><th>value</th> <td>{{data.value}}</td></tr>' +
-                '      <tr><th>size</th> <td>{{size}}</td></tr>' +
                 '    </table>' +
-                '  </div>' +
-                '  <div class="sigma-tooltip-footer">Number of connections: {{degree}}</div>',
+                ' </div>' +
+                '  <div class="card-footer text-muted">Number of connections: {{degree}}</div>',
                 renderer: function(node, template) {
                     // The function context is s.graph
                     node.degree = this.degree(node.id);
