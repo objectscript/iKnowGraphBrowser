@@ -7,7 +7,6 @@
     "babel-preset-react": "^6.16.0",
     "linkurious": "^1.5.2",
     "lodash": "^4.13.1",
-    "mustache": "^2.3.0",
     "react": "15.3.2",
     "react-dom": "15.3.2"
   },

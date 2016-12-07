@@ -1,7 +1,7 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import * as _ from 'lodash'
 import * as sigmajs from 'linkurious'
-import * as Mustache from 'mustache'
 
 
 import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins'
@@ -24,6 +24,8 @@ export default class GraphViz extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps, prevState) {
+        console.log('update!');
+        console.log('Graph is changed:' + (prevProps.graph == this.props.graph));
         if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
     }
 
@@ -158,8 +160,8 @@ export default class GraphViz extends React.PureComponent {
                 cssClass: 'card',
                 position: 'top',
                 // autoadjust: true,
-                template:
-                ' <div class="card-block"><h4 class="card-title">{{label}}</h4>' +
+                //template: ' ',
+                /*' <div class="card-block"><h4 class="card-title">{{label}}</h4>' +
                 '    <table class="table table-sm">' +
                 '      <tr><th>id</th> <td>{{id}}</td></tr>' +
                 '      <tr><th>frequency</th> <td>{{data.frequency}}</td></tr>' +
@@ -167,19 +169,39 @@ export default class GraphViz extends React.PureComponent {
                 '      <tr><th>spread</th> <td>{{data.spread}}</td></tr>' +
                 '    </table>' +
                 ' </div>' +
-                '  <div class="card-footer text-muted">Number of connections: {{degree}}</div>',
+                '  <div class="card-footer text-muted">Number of connections: {{degree}}</div>',*/
                 renderer: function(node, template) {
                     // The function context is s.graph
                     node.degree = this.degree(node.id);
 
-                    // Returns an HTML string:
-                    return Mustache.render(template, node);
+                    function NodeTemplate(props) {
+                        return (
+                            <div>
+                                <div className="card-block"><h4 className="card-title">{props.node.label}</h4>
+                                   <table className="table table-sm">
+                                     {props.node.data ?
+                                         <tbody>
+                                             <tr><th>id</th><td>{props.node.id}</td></tr>
+                                             <tr><th>frequency</th><td>{props.node.data.frequency}</td></tr>
+                                             <tr><th>score</th><td>{props.node.data.score}</td></tr>
+                                             <tr><th>spread</th><td>{props.node.data.spread}</td></tr>
+                                         </tbody> :
+                                         <tbody>
+                                            <tr><th>id</th><td>{props.node.id}</td></tr>
+                                         </tbody>
+                                     }
+                                   </table>
+                                </div>
+                                <div className="card-footer text-muted">Number of connections: {props.node.degree}</div>
+                            </div>
+                        );
+                    }
 
-                    // Returns a DOM Element:
-                    //var el = document.createElement('div');
-                    //return el.innerHTML = Mustache.render(template, node);
+                    var el = document.createElement('div');
+                    ReactDOM.render(<NodeTemplate node={node} />, el);
+                    return el;
                 }
-            }, {
+            }, /*{
                 show: 'rightClickNode',
                 cssClass: 'sigma-tooltip',
                 position: 'right',
@@ -194,12 +216,12 @@ export default class GraphViz extends React.PureComponent {
                     node.degree = this.degree(node.id);
                     return Mustache.render(template, node);
                 }
-            }],
-            stage: {
+            }*/],
+            /*stage: {
                 template:
                 '<div class="arrow"></div>' +
                 '<div class="sigma-tooltip-header"> Menu </div>'
-            }
+            }*/
         };
         var tooltips = sigmajs.sigma.plugins.tooltips(s, s.renderers[0], tooltipConfig);
     }
