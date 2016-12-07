@@ -208,33 +208,36 @@ export default class GraphViz extends React.PureComponent {
         return (
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.createGraph(element)} />
-                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, top: 0, width: '150px', height: '100px'}}>
-                    <form>
-                        <div className="input-group input-group-sm">
-                            <label className="form-check-label">
-                                <input id="param-frequency" name="nodeSizeParam" type="radio" value="frequency" className="form-check-input"
-                                        checked={this.state.sizeParam == 'frequency'}
-                                        onChange={() => this.setState({sizeParam: 'frequency'})}/>
-                                frequency
-                            </label>
-                        </div>
-                        <div className="input-group input-group-sm">
-                            <label className="form-check-label">
-                                <input id="param-spread" name="nodeSizeParam" type="radio" value="spread" className="form-check-input"
-                                       checked={this.state.sizeParam == 'spread'}
-                                       onChange={() => this.setState({sizeParam: 'spread'})}/>
-                                spread
-                            </label>
-                        </div>
-                        <div className="input-group input-group-sm">
-                            <label className="form-check-label">
-                                <input id="param-score" name="nodeSizeParam" type="radio" value="score" className="form-check-input"
-                                       checked={this.state.sizeParam == 'score'}
-                                       onChange={() => this.setState({sizeParam: 'score'})}/>
-                                score
-                            </label>
-                        </div>
-                    </form>
+                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, top: 0, width: '150px', height: '130px'}} className="card">
+                    <div className="card-block">
+                        <h6 className="card-title">Node size is</h6>
+                        <form>
+                            <div className="input-group input-group-sm">
+                                <label className="form-check-label">
+                                    <input id="param-frequency" name="nodeSizeParam" type="radio" value="frequency" className="form-check-input"
+                                            checked={this.state.sizeParam == 'frequency'}
+                                            onChange={() => this.setState({sizeParam: 'frequency'})}/>
+                                    frequency
+                                </label>
+                            </div>
+                            <div className="input-group input-group-sm">
+                                <label className="form-check-label">
+                                    <input id="param-spread" name="nodeSizeParam" type="radio" value="spread" className="form-check-input"
+                                           checked={this.state.sizeParam == 'spread'}
+                                           onChange={() => this.setState({sizeParam: 'spread'})}/>
+                                    spread
+                                </label>
+                            </div>
+                            <div className="input-group input-group-sm">
+                                <label className="form-check-label">
+                                    <input id="param-score" name="nodeSizeParam" type="radio" value="score" className="form-check-input"
+                                           checked={this.state.sizeParam == 'score'}
+                                           onChange={() => this.setState({sizeParam: 'score'})}/>
+                                    score
+                                </label>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         );
