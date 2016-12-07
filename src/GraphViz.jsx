@@ -36,18 +36,20 @@ export default class GraphViz extends React.PureComponent {
                     graph: this.emptyGraph(),
                     container: element,
                     settings: {
+                        animationsTime: 2000,
+                        zoomMin: 0.01,
                     }
                 });
             } else {
                 this.sigma.graph.clear();
                 this.sigma.refresh();
-                //this.sigma.kill();
+                this.resetLayout();
             }
             this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
             this.prepareGraph(this.sigma.graph, this.props.graph);
             this.updateSizes();
             //this.sigma.refresh();
-            this.layoutGraph(this.sigma);
+            this.startLayout();
             this.addTooltip(this.sigma);
         } else {
 
@@ -123,10 +125,27 @@ export default class GraphViz extends React.PureComponent {
         return g;
     }
 
-    layoutGraph(s) {
-        var fa = s.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true, startingIterations: 5, iterationsPerRender: 5});
+    startLayout() {
+        /*var fa = this.sigma.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true, startingIterations: 5, iterationsPerRender: 5});
         window.setTimeout(function() {s.stopForceAtlas2(); s.killForceAtlas2();}
-            , 3000);
+            , 3000);*/
+        var fa = sigmajs.sigma.layouts.configForceLink(this.sigma, {
+            worker: true,
+            autoStop: true,
+            maxIterations: 200,
+            background: true,
+            scaleRatio: 2,
+            strongGravityMode: false,
+            gravity: 2,
+            barnesHutOptimize: true,
+            easing: 'cubicInOut',
+            slowDown: 0.5
+        });
+        sigmajs.sigma.layouts.startForceLink();
+    }
+
+    resetLayout() {
+        sigmajs.sigma.layouts.killForceLink();
     }
 
     addTooltip(s) {
