@@ -24,7 +24,7 @@ export default class Filter extends React.PureComponent {
             const removeNodes = _(this.props.graph.nodes).filter(node => {
                 if (node.entities) {
                     const entity = node.entities[0];
-                    return !(entity.frequency > this.state.minFrequency && entity.spread > this.state.minSpread && entity.score > this.state.minScore);
+                    return !(entity.frequency > this.state.minFrequency && entity.spread > this.state.minSpread && (!entity.score || entity.score > this.state.minScore));
                 } else return false;
             }).map(node => node.id).value();
             this.setState({
