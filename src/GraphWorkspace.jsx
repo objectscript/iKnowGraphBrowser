@@ -15,10 +15,14 @@ export default class GraphWorkspace extends React.PureComponent {
                 <div className="card-block">
                     <h4 className="card-title">Graph visualization</h4>
                     {(this.props.graph && this.props.graph.nodes.length) > 0 ?
-                        <div>
-                            <GraphViz graph={this.props.graph} selectedNodes={this.state.selectedNodes}
+                        <div className="row">
+                            <div className="col-md-9">
+                                <GraphViz graph={this.props.graph} selectedNodes={this.state.selectedNodes}
                                       onSelected={this.onSelected}/>
-                            <SelectedTable selectedNodes={this.state.selectedNodes} onSelected={this.onSelected}/>
+                            </div>
+                            <div className="col-md-3">
+                                <SelectedTable selectedNodes={this.state.selectedNodes} onSelected={this.onSelected}/>
+                            </div>
                         </div>
                     :
                        <div>No data to visualize</div>}
@@ -27,8 +31,7 @@ export default class GraphWorkspace extends React.PureComponent {
         );
     }
 
-    onSelected = (id, state) => {
-        //add/remove nodes here
-
+    onSelected = (nodes) => {
+        this.setState({selectedNodes : nodes});
     }
 }

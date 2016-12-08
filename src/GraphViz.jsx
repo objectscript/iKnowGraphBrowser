@@ -9,7 +9,8 @@ import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkuriou
 
 export default class GraphViz extends React.PureComponent {
     propTypes: {
-        graph: React.PropTypes.any.isRequired
+        graph: React.PropTypes.any.isRequired,
+        onSelected: React.PropTypes.func.isRequired
     };
     state = {
         selectedNodes: [],
@@ -33,6 +34,7 @@ export default class GraphViz extends React.PureComponent {
         //this.sigma.refresh();
         this.startLayout();
         this.addTooltip(this.sigma);
+        this.enableSelection();
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -42,6 +44,7 @@ export default class GraphViz extends React.PureComponent {
             this.sigma.refresh();
             this.resetLayout();
             this.initGraph();
+            this.selectionChanged([]);
         }
         if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
     }
@@ -49,17 +52,72 @@ export default class GraphViz extends React.PureComponent {
     createSigmaInstance(node) {
         let sigma = new sigmajs.sigma({
             graph: this.emptyGraph(),
-            container: this.sigmaNode,
+            renderer: {
+                container: this.sigmaNode,
+                type: 'canvas'
+            },
             settings: {
                 animationsTime: 2000,
                 zoomMin: 0.01,
+                enableEdgeHovering: false,
+                nodeActiveBorderSize: 2,
+                nodeActiveOuterBorderSize: 3,
+                defaultNodeActiveBorderColor: '#fff',
+                defaultNodeActiveOuterBorderColor: 'rgb(236, 81, 72)',
             }
         });
         return sigma;
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (this.sigma && this.sigma.isForceAtlas2Running()) this.sigma.killForceAtlas2();
+    selectionChanged(nodes) {
+        this.props.onSelected(_.map(nodes, (node) => node.data ? node.data : {id: node.id, value: node.label}));
+    }
+
+    enableSelection() {
+        // Instanciate the ActiveState plugin:
+        var activeState = sigmajs.sigma.plugins.activeState(this.sigma);
+        var activeNodesCallback = _.debounce(function(event) {
+            console.log('active nodes:', activeState.nodes());
+        }, 250);
+        //activeState.bind('activeNodes', activeNodesCallback);
+
+        activeState.bind('activeNodes', _.debounce((event)=> this.selectionChanged(activeState.nodes()), 250));
+        var keyboard = sigmajs.sigma.plugins.keyboard(this.sigma, this.sigma.renderers[0]);
+
+        // Initialize the Select plugin:
+        var select = sigmajs.sigma.plugins.select(this.sigma, activeState);
+        select.bindKeyboard(keyboard);
+
+        // Initialize the dragNodes plugin:
+        var dragListener = sigmajs.sigma.plugins.dragNodes(this.sigma, this.sigma.renderers[0], activeState);
+
+        var lasso = new sigmajs.sigma.plugins.lasso(this.sigma, this.sigma.renderers[0], {
+            'strokeStyle': 'rgb(236, 81, 72)',
+            'lineWidth': 2,
+            'fillWhileDrawing': true,
+            'fillStyle': 'rgba(236, 81, 72, 0.2)',
+            'cursor': 'crosshair'
+        });
+
+        select.bindLasso(lasso);
+        //lasso.activate();
+
+        //"spacebar" + "s" keys pressed binding for the lasso tool
+        keyboard.bind('32+83', function() {
+            if (lasso.isActive) {
+                lasso.deactivate();
+            } else {
+                lasso.activate();
+            }
+        });
+
+        // Listen for selectedNodes event
+        lasso.bind('selectedNodes', event => {
+            setTimeout(() => {
+                lasso.deactivate();
+                this.sigma.refresh({ skipIdexation: true });
+            }, 0);
+        });
     }
 
     updateSizes() {
@@ -230,7 +288,7 @@ export default class GraphViz extends React.PureComponent {
         return (
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
-                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, top: 0, width: '150px', height: '130px'}} className="card">
+                <div id="nodeSizePanel" style={{position: 'absolute', left: 0, bottom: 0, width: '150px', height: '130px'}} className="card">
                     <div className="card-block">
                         <h6 className="card-title">Node size is</h6>
                         <form>
@@ -259,6 +317,17 @@ export default class GraphViz extends React.PureComponent {
                                 </label>
                             </div>
                         </form>
+                    </div>
+                </div>
+                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, bottom: 0, width: '260px', height: '170px'}} className="card">
+                    <div className="card-block small">
+                        <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
+                        <div><kbd>spacebar</kbd> + <kbd>a</kbd> Select/deselect all</div>
+                        <div><kbd>spacebar</kbd> + <kbd>u</kbd> Deselect all</div>
+                        <div><kbd>spacebar</kbd> + <kbd>Del</kbd> Drop selected</div>
+                        <div><kbd>spacebar</kbd> + <kbd>e</kbd> Select neighbors</div>
+                        <div><kbd>spacebar</kbd> + <kbd>i</kbd> Select isolated</div>
+                        <div><kbd>spacebar</kbd> + <kbd>l</kbd> Select leaf</div>
                     </div>
                 </div>
             </div>
