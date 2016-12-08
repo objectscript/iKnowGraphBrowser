@@ -16,46 +16,46 @@ export default class GraphViz extends React.PureComponent {
         sizeParam: 'frequency'
     };
 
-    emptyGraph() {
-        return {
-            nodes: [],
-            edges: []
-        };
+    registerSigmaElement(element) {
+        //element could be null and we would want to cleanup
+        this.sigmaNode = element;
+    }
+
+    componentDidMount() {
+        this.sigma = this.createSigmaInstance();
+        this.initGraph();
+    }
+
+    initGraph() {
+        this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
+        this.prepareGraph(this.sigma.graph, this.props.graph);
+        this.updateSizes();
+        //this.sigma.refresh();
+        this.startLayout();
+        this.addTooltip(this.sigma);
     }
 
     componentDidUpdate(prevProps, prevState) {
-        console.log('update!');
-        console.log('Graph is changed:' + (prevProps.graph == this.props.graph));
+        //check if the graph has changed. If it had, recreate it
+        if (prevProps.graph != this.props.graph) {
+            this.sigma.graph.clear();
+            this.sigma.refresh();
+            this.resetLayout();
+            this.initGraph();
+        }
         if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
     }
 
-
-
-    createGraph = (element) => {
-        if (element) {
-            if (!this.sigma) {
-                this.sigma = new sigmajs.sigma({
-                    graph: this.emptyGraph(),
-                    container: element,
-                    settings: {
-                        animationsTime: 2000,
-                        zoomMin: 0.01,
-                    }
-                });
-            } else {
-                this.sigma.graph.clear();
-                this.sigma.refresh();
-                this.resetLayout();
+    createSigmaInstance(node) {
+        let sigma = new sigmajs.sigma({
+            graph: this.emptyGraph(),
+            container: this.sigmaNode,
+            settings: {
+                animationsTime: 2000,
+                zoomMin: 0.01,
             }
-            this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
-            this.prepareGraph(this.sigma.graph, this.props.graph);
-            this.updateSizes();
-            //this.sigma.refresh();
-            this.startLayout();
-            this.addTooltip(this.sigma);
-        } else {
-
-        }
+        });
+        return sigma;
     }
 
     componentWillReceiveProps(nextProps) {
@@ -229,7 +229,7 @@ export default class GraphViz extends React.PureComponent {
     render() {
         return (
             <div>
-                <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.createGraph(element)} />
+                <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
                 <div id="nodeSizePanel" style={{position: 'absolute', right: 0, top: 0, width: '150px', height: '130px'}} className="card">
                     <div className="card-block">
                         <h6 className="card-title">Node size is</h6>
@@ -263,5 +263,13 @@ export default class GraphViz extends React.PureComponent {
                 </div>
             </div>
         );
+
+    }
+
+    emptyGraph() {
+        return {
+            nodes: [],
+            edges: []
+        };
     }
 }
