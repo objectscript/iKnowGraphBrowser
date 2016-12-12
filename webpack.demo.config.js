@@ -59,11 +59,11 @@ module.exports = {
     devServer: {
         proxy: {
             "**": {
-                target: process.env.ENDPOINT ? process.env.ENDPOINT : 'http://82.110.159.50/csp/browser/rest/domain/1/' ,
+                target: process.env.IKNOW_ENDPOINT ? process.env.IKNOW_ENDPOINT : 'http://82.110.159.50/csp/browser/rest/domain/1/' ,
                 //ignorePath: true,
                 changeOrigin: true,
                 secure: false,
-                auth: 'EntityBrowser:BrowseM3!'
+                auth: process.env.IKNOW_AUTH ? process.env.IKNOW_AUTH  : 'EntityBrowser:BrowseM3!'
             },
         },
     },
