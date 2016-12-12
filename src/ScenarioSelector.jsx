@@ -1,5 +1,5 @@
 import React from 'react'
-import Filter from './Filter'
+import GraphWorkspace from './GraphWorkspace'
 
 export default class ScenarioSelector extends React.Component {
 
@@ -36,8 +36,8 @@ export default class ScenarioSelector extends React.Component {
                                 </form>
                         </div>
                     </div>
-                    <Filter graph={this.state.graph} />
                 </div>
+                <GraphWorkspace graph={this.state.graph} />
             </div>
         );
     }

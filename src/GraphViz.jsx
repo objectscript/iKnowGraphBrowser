@@ -288,7 +288,7 @@ export default class GraphViz extends React.PureComponent {
         return (
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
-                <div id="nodeSizePanel" style={{position: 'absolute', left: 0, bottom: 0, width: '150px', height: '130px'}} className="card">
+                <div id="nodeSizePanel" style={{position: 'absolute', left: '10px', bottom: 0, width: '150px', height: '130px'}} className="card">
                     <div className="card-block">
                         <h6 className="card-title">Node size is</h6>
                         <form>
@@ -319,7 +319,7 @@ export default class GraphViz extends React.PureComponent {
                         </form>
                     </div>
                 </div>
-                <div id="nodeSizePanel" style={{position: 'absolute', right: 0, bottom: 0, width: '260px', height: '170px'}} className="card">
+                <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
                     <div className="card-block small">
                         <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
                         <div><kbd>spacebar</kbd> + <kbd>a</kbd> Select/deselect all</div>
