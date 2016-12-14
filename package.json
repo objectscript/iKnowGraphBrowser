@@ -4,7 +4,7 @@
   "description": "iKnow graph browser",
   "main": "dist/iKnowBrowser.js",
   "dependencies": {
-    "babel-preset-react": "^6.16.0",
+    "file-saver": "^1.3.3",
     "linkurious": "^1.5.2",
     "lodash": "^4.13.1",
     "react": "15.3.2",
@@ -14,6 +14,7 @@
     "babel-core": "^6.18.2",
     "babel-loader": "^6.2.8",
     "babel-preset-es2015": "^6.18.0",
+    "babel-preset-react": "^6.16.0",
     "babel-preset-stage-0": "^6.16.0",
     "css-loader": "0.23.1",
     "exports-loader": "0.6.3",

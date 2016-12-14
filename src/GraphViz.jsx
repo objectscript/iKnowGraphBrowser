@@ -70,7 +70,23 @@ export default class GraphViz extends React.PureComponent {
     }
 
     selectionChanged(nodes) {
-        this.props.onSelected(_.map(nodes, (node) => node.data ? node.data : {id: node.id, value: node.label}));
+        this.props.onSelected(_.map(nodes,
+            (node) => {
+              const newNode = node.data ? node.data : {id: node.id, value: node.label};
+                const parentInfo = this.getParentInfo(node.id);
+                if (parentInfo) {
+                    newNode.parentLabel = parentInfo.parentLabel;
+                    newNode.edgeType = parentInfo.edgeType;
+                }
+              return newNode;
+            })
+        );
+    }
+
+    getParentInfo(nodeId) {
+        const parentEdge = _.find(this.sigma.graph.adjacentEdges(nodeId), edge => edge.target == nodeId);
+        const parent = parentEdge ? this.sigma.graph.nodes(parentEdge.source) : undefined;
+        return parent ? {parentLabel : parent.label, edgeType: parentEdge.data.type} : undefined;
     }
 
     enableSelection() {
@@ -178,7 +194,10 @@ export default class GraphViz extends React.PureComponent {
                 target: edge.destination,
                 /*size: Math.random(),*/
                 color: colors[edge.type],
-                type: 'arrow'
+                type: 'arrow',
+                data: {
+                    type: edge.type
+                }
             });
         });
 
