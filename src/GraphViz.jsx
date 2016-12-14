@@ -340,6 +340,7 @@ export default class GraphViz extends React.PureComponent {
                 </div>
                 <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
                     <div className="card-block small">
+                        <div><kbd>spacebar</kbd> + <kbd>click</kbd> Multi-select</div>
                         <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
                         <div><kbd>spacebar</kbd> + <kbd>a</kbd> Select/deselect all</div>
                         <div><kbd>spacebar</kbd> + <kbd>u</kbd> Deselect all</div>
