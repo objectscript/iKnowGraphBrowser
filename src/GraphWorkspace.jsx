@@ -49,7 +49,7 @@ export default class GraphWorkspace extends React.PureComponent {
         return <div className="card">
             <div className="card-block">
                 <h4 className="card-title">Selected Nodes</h4>
-                <SelectedTable selectedNodes={this.state.selectedNodes} onSelected={this.onSelected}/>
+                <SelectedTable selectedNodes={this.state.selectedNodes} onRemoved={this.onTableRemoved}/>
             </div>
         </div>;
     };
@@ -73,13 +73,29 @@ export default class GraphWorkspace extends React.PureComponent {
         </div>
     }
 
+    computeDescendants(graph, currentDescendants, allDescendants = []) {
+        if (allDescendants.length == 0) allDescendants = currentDescendants;
+        let nextDescendants = _.chain(graph.edges)
+            .filter(edge => currentDescendants.includes(edge.origin))
+            .map(edge=> edge.destination).value();
+        allDescendants = _.concat(allDescendants, nextDescendants);
+        if (nextDescendants.length == 0) return allDescendants;
+        return this.computeDescendants(graph, nextDescendants, allDescendants);
+    }
+
+    onTableRemoved = (node, recursive) => {
+        const affectedNodes = (recursive) ? this.computeDescendants(this.state.filteredGraph, [node.nodeId]) : [node.nodeId];
+        let newSelected = _.filter(this.state.selectedNodes, node => !affectedNodes.includes(node.nodeId));
+        this.setState({selectedNodes: newSelected});
+    };
+
     onSelectionAdd = (nodes) => {
-        var newSelected = _.unionBy(this.state.selectedNodes, nodes, (node)=>node.id);
+        var newSelected = _.unionBy(this.state.selectedNodes, nodes, (node)=>node.nodeId);
         this.setState({selectedNodes : newSelected});
     };
 
     onSelectionRemove = (nodes) => {
-        var newSelected = _.differenceBy(this.state.selectedNodes, nodes, node=>node.id);
+        var newSelected = _.differenceBy(this.state.selectedNodes, nodes, node=>node.nodeId);
         this.setState({selectedNodes: newSelected});
     };
 

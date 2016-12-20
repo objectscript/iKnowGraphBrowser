@@ -22,6 +22,7 @@ export default class SelectedTable extends React.Component {
                                 {/*<td className="text-xs-right">{node.frequency}</td>
                                 <td className="text-xs-right">{node.score}</td>
                                 <td className="text-xs-right">{node.spread}</td>*/}
+                                <td><button className="btn btn-danger btn-sm" onClick={() => this.props.onRemoved(node, true)}>x</button></td>
                             </tr>
                         ).value()}
                         </tbody>

@@ -60,6 +60,7 @@ export default class GraphViz extends React.PureComponent {
                 type: 'canvas'
             },
             settings: {
+                maxNodeLabelLineLength: 10,
                 animationsTime: 2000,
                 zoomMin: 0.01,
                 enableEdgeHovering: false,
