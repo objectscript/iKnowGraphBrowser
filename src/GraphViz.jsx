@@ -35,8 +35,7 @@ export default class GraphViz extends React.PureComponent {
         this.updateSizes();
         //this.sigma.refresh();
         this.startLayout();
-        this.addTooltip(this.sigma);
-        this.enableCustomSelection();
+
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -70,58 +69,9 @@ export default class GraphViz extends React.PureComponent {
                 defaultNodeActiveOuterBorderColor: 'rgb(236, 81, 72)',
             }
         });
+        this.addTooltip(sigma);
+        this.enableCustomSelection(sigma);
         return sigma;
-    }
-
-    selectionChanged(nodes) {
-        this.props.onSelectionAdd(_.map(nodes, transformNode));
-    }
-
-    enableSelection() {
-        // Instanciate the ActiveState plugin:
-        var activeState = sigmajs.sigma.plugins.activeState(this.sigma);
-        var activeNodesCallback = _.debounce(function(event) {
-            console.log('active nodes:', activeState.nodes());
-        }, 250);
-        //activeState.bind('activeNodes', activeNodesCallback);
-
-        activeState.bind('activeNodes', _.debounce((event)=> this.selectionChanged(activeState.nodes()), 250));
-        var keyboard = sigmajs.sigma.plugins.keyboard(this.sigma, this.sigma.renderers[0]);
-
-        // Initialize the Select plugin:
-        var select = sigmajs.sigma.plugins.select(this.sigma, activeState);
-        select.bindKeyboard(keyboard);
-
-        // Initialize the dragNodes plugin:
-        var dragListener = sigmajs.sigma.plugins.dragNodes(this.sigma, this.sigma.renderers[0], activeState);
-
-        var lasso = new sigmajs.sigma.plugins.lasso(this.sigma, this.sigma.renderers[0], {
-            'strokeStyle': 'rgb(236, 81, 72)',
-            'lineWidth': 2,
-            'fillWhileDrawing': true,
-            'fillStyle': 'rgba(236, 81, 72, 0.2)',
-            'cursor': 'crosshair'
-        });
-
-        select.bindLasso(lasso);
-        //lasso.activate();
-
-        //"spacebar" + "s" keys pressed binding for the lasso tool
-        keyboard.bind('32+83', function() {
-            if (lasso.isActive) {
-                lasso.deactivate();
-            } else {
-                lasso.activate();
-            }
-        });
-
-        // Listen for selectedNodes event
-        lasso.bind('selectedNodes', event => {
-            setTimeout(() => {
-                lasso.deactivate();
-                this.sigma.refresh({ skipIdexation: true });
-            }, 0);
-        });
     }
 
     updateSelection = () => {
@@ -130,13 +80,13 @@ export default class GraphViz extends React.PureComponent {
         this.sigma.refresh();
     };
 
-    enableCustomSelection() {
+    enableCustomSelection(sigma) {
         // Instanciate the ActiveState plugin:
-        this.activeState = sigmajs.sigma.plugins.activeState(this.sigma);
+        this.activeState = sigmajs.sigma.plugins.activeState(sigma);
         var activeNodesCallback = _.debounce(function(event) {
             console.log('active nodes:', activeState.nodes());
         }, 250);
-        this.sigma.bind('clickNode', this.onClick);
+        sigma.bind('clickNode', this.onClick);
     }
 
     transformNode(node) {
@@ -151,18 +101,22 @@ export default class GraphViz extends React.PureComponent {
         //If selecting with shift key, select all descendants
         let affectedNodes = [];
         if (event.data.captor.shiftKey) {
-            affectedNodes.push(this.computeDescendants(this.sigma.graph, [event.data.node.id]))
+            affectedNodes = this.computeDescendants(this.sigma.graph, [event.data.node.id]);
         } else {
             affectedNodes = [event.data.node.id];
         }
+
+        //transform nodeId list to nodes
+        const eventNodes = _.chain(affectedNodes).map(nodeId => this.sigma.graph.nodes(nodeId)).map(this.transformNode).value();
         if (!_.find(this.props.selectedNodes, (node) => node.nodeId === event.data.node.id)) {
-            this.props.onSelectionAdd(_.chain(affectedNodes).map(nodeId => this.sigma.graph.nodes(nodeId)).map(this.transformNode).value());
+            this.props.onSelectionAdd(eventNodes);
         } else {
-            this.props.onSelectionRemove(affectedNodes.map(this.transformNode));
+            this.props.onSelectionRemove(eventNodes);
         }
     };
 
     computeDescendants(graph, currentDescendants, allDescendants = []) {
+        if (allDescendants.length == 0) allDescendants = currentDescendants;
         let nextDescendants = _.chain(currentDescendants)
             .flatMap(nodeId => graph.adjacentEdges(nodeId).map(edge => ({nodeId: nodeId, edge: edge})))
             .filter(edgeInfo => edgeInfo.edge.source == edgeInfo.nodeId)

@@ -11,6 +11,13 @@ export default class GraphWorkspace extends React.PureComponent {
         selectedNodes: [],
         filteredGraph: {nodes: [], edges: []}
     };
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.state.filteredGraph != prevState.filteredGraph) {
+            this.setState({selectedNodes:[]})
+        }
+    }
+
     render() {
         return (
                 (this.state.filteredGraph && this.state.filteredGraph.nodes.length) > 0 ?
@@ -35,6 +42,8 @@ export default class GraphWorkspace extends React.PureComponent {
 
         );
     }
+
+
 
     selectedBlock = () => {
         return <div className="card">
