@@ -2,9 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import * as _ from 'lodash'
 import * as sigmajs from 'linkurious'
-
+import * as utils from './utils'
+import * as tooltipInfo from "./tooltipInfo";
 
 import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins'
+
 
 
 export default class GraphViz extends React.PureComponent {
@@ -13,7 +15,6 @@ export default class GraphViz extends React.PureComponent {
         onSelected: React.PropTypes.func.isRequired
     };
     state = {
-        selectedNodes: [],
         sizeParam: 'frequency'
     };
 
@@ -30,11 +31,12 @@ export default class GraphViz extends React.PureComponent {
     initGraph() {
         this.sigma.settings('labelThreshold', this.props.graph.nodes.length < 300 ? 3 : 5);
         this.prepareGraph(this.sigma.graph, this.props.graph);
+        this.addParentInfo();
         this.updateSizes();
         //this.sigma.refresh();
         this.startLayout();
         this.addTooltip(this.sigma);
-        this.enableSelection();
+        this.enableCustomSelection();
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -44,9 +46,11 @@ export default class GraphViz extends React.PureComponent {
             this.sigma.refresh();
             this.resetLayout();
             this.initGraph();
-            this.selectionChanged([]);
         }
         if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
+        if (prevProps.selectedNodes != this.props.selectedNodes) {
+            this.updateSelection();
+        }
     }
 
     createSigmaInstance(node) {
@@ -70,23 +74,7 @@ export default class GraphViz extends React.PureComponent {
     }
 
     selectionChanged(nodes) {
-        this.props.onSelected(_.map(nodes,
-            (node) => {
-              const newNode = node.data ? node.data : {id: node.id, value: node.label};
-                const parentInfo = this.getParentInfo(node.id);
-                if (parentInfo) {
-                    newNode.parentLabel = parentInfo.parentLabel;
-                    newNode.edgeType = parentInfo.edgeType;
-                }
-              return newNode;
-            })
-        );
-    }
-
-    getParentInfo(nodeId) {
-        const parentEdge = _.find(this.sigma.graph.adjacentEdges(nodeId), edge => edge.target == nodeId);
-        const parent = parentEdge ? this.sigma.graph.nodes(parentEdge.source) : undefined;
-        return parent ? {parentLabel : parent.label, edgeType: parentEdge.data.type} : undefined;
+        this.props.onSelectionAdd(_.map(nodes, transformNode));
     }
 
     enableSelection() {
@@ -136,6 +124,54 @@ export default class GraphViz extends React.PureComponent {
         });
     }
 
+    updateSelection = () => {
+        this.activeState.dropNodes();
+        this.activeState.addNodes(_.map(this.props.selectedNodes, node => node.nodeId));
+        this.sigma.refresh();
+    };
+
+    enableCustomSelection() {
+        // Instanciate the ActiveState plugin:
+        this.activeState = sigmajs.sigma.plugins.activeState(this.sigma);
+        var activeNodesCallback = _.debounce(function(event) {
+            console.log('active nodes:', activeState.nodes());
+        }, 250);
+        this.sigma.bind('clickNode', this.onClick);
+    }
+
+    transformNode(node) {
+        const newNode = node.data ? node.data : {id: node.id, value: node.label};
+        newNode.nodeId = node.id;
+        newNode.parentLabel = node.parentLabel;
+        newNode.edgeType = node.edgeType;
+        return newNode;
+    }
+
+    onClick = (event) => {
+        //If selecting with shift key, select all descendants
+        let affectedNodes = [];
+        if (event.data.captor.shiftKey) {
+            affectedNodes.push(this.computeDescendants(this.sigma.graph, [event.data.node.id]))
+        } else {
+            affectedNodes = [event.data.node.id];
+        }
+        if (!_.find(this.props.selectedNodes, (node) => node.nodeId === event.data.node.id)) {
+            this.props.onSelectionAdd(_.chain(affectedNodes).map(nodeId => this.sigma.graph.nodes(nodeId)).map(this.transformNode).value());
+        } else {
+            this.props.onSelectionRemove(affectedNodes.map(this.transformNode));
+        }
+    };
+
+    computeDescendants(graph, currentDescendants, allDescendants = []) {
+        let nextDescendants = _.chain(currentDescendants)
+            .flatMap(nodeId => graph.adjacentEdges(nodeId).map(edge => ({nodeId: nodeId, edge: edge})))
+            .filter(edgeInfo => edgeInfo.edge.source == edgeInfo.nodeId)
+            .map(edgeInfo=> edgeInfo.edge.target).value();
+        allDescendants = _.concat(allDescendants, nextDescendants);
+        if (nextDescendants.length == 0) return allDescendants;
+        return this.computeDescendants(graph, nextDescendants, allDescendants);
+    }
+
     updateSizes() {
         let paramFn;
         switch (this.state.sizeParam) {
@@ -143,32 +179,16 @@ export default class GraphViz extends React.PureComponent {
             case 'spread': paramFn = node => node.data && node.data.spread ? node.data.spread : 1; break;
             case 'score': paramFn = node => node.data && node.data.score ? node.data.score : 1; break;
         }
-        const stat = this.computeNormalizeCoeff(this.sigma.graph.nodes(), paramFn);
+        const stat = utils.computeMinMax(this.sigma.graph.nodes(), paramFn);
         const {mn: mnStat, mx: mxStat} = stat;
         this.sigma.graph.nodes().forEach(node => {
-            node.size = node.data ? this.normalizeCoeff(paramFn(node), mnStat, mxStat, 100) : 120
+            node.size = node.data ? utils.normalizeCoeff(paramFn(node), mnStat, mxStat, 100) : 120
         });
         this.sigma.refresh();
     }
 
-    computeNormalizeCoeff(nodes, accessFn) {
-        //this is not efficient for compute time
-        const mn = _.minBy(nodes, accessFn);
-        const mx = _.maxBy(nodes, accessFn);
-        return {mn: accessFn(mn), mx: accessFn(mx)};
-    }
-
-    /**
-     * Normalized value from min and max to
-     * @param value
-     * @returns {number}
-     */
-    normalizeCoeff(value, mn, mx, limit) {
-        return (value - mn) * mn/mx * (limit - 1) + 20;
-    }
-
     prepareGraph(g, srcData) {
-        // const stat = this.computeNormalizeCoeff(srcData.nodes, node => node.entities ? node.entities[0].frequency : 1);
+        // const stat = utils.computeMinMax(srcData.nodes, node => node.entities ? node.entities[0].frequency : 1);
         // const {mn: mnStat, mx: mxStat} = stat;
         _.each(srcData.nodes, node => {
             g.addNode({
@@ -204,6 +224,22 @@ export default class GraphViz extends React.PureComponent {
         return g;
     }
 
+    addParentInfo = () => {
+        _.each(this.sigma.graph.nodes(), node => {
+            let parentInfo = this.getParentInfo(node.id)
+            if (parentInfo) {
+                node.parentLabel = parentInfo.parentLabel;
+                node.edgeType = parentInfo.edgeType;
+            }
+        });
+    };
+
+    getParentInfo(nodeId) {
+        const parentEdge = _.find(this.sigma.graph.adjacentEdges(nodeId), edge => edge.target == nodeId);
+        const parent = parentEdge ? this.sigma.graph.nodes(parentEdge.source) : undefined;
+        return parent ? {parentLabel : parent.label, edgeType: parentEdge.data.type} : undefined;
+    }
+
     startLayout() {
         /*var fa = this.sigma.startForceAtlas2({worker: true, scalingRatio: 100, gravity: 1, barnesHutOptimize: true, adjustSizes: false, strongGravityMode: true, startingIterations: 5, iterationsPerRender: 5});
         window.setTimeout(function() {s.stopForceAtlas2(); s.killForceAtlas2();}
@@ -236,69 +272,17 @@ export default class GraphViz extends React.PureComponent {
                 hide: 'hovers',
                 cssClass: 'card',
                 position: 'top',
-                // autoadjust: true,
-                //template: ' ',
-                /*' <div class="card-block"><h4 class="card-title">{{label}}</h4>' +
-                '    <table class="table table-sm">' +
-                '      <tr><th>id</th> <td>{{id}}</td></tr>' +
-                '      <tr><th>frequency</th> <td>{{data.frequency}}</td></tr>' +
-                '      <tr><th>score</th> <td>{{data.score}}</td></tr>' +
-                '      <tr><th>spread</th> <td>{{data.spread}}</td></tr>' +
-                '    </table>' +
-                ' </div>' +
-                '  <div class="card-footer text-muted">Number of connections: {{degree}}</div>',*/
                 renderer: function(node, template) {
                     // The function context is s.graph
                     node.degree = this.degree(node.id);
 
-                    function NodeTemplate(props) {
-                        return (
-                            <div>
-                                <div className="card-block"><h4 className="card-title">{props.node.label}</h4>
-                                   <table className="table table-sm">
-                                     {props.node.data ?
-                                         <tbody>
-                                             <tr><th>id</th><td>{props.node.id}</td></tr>
-                                             <tr><th>frequency</th><td>{props.node.data.frequency}</td></tr>
-                                             <tr><th>score</th><td>{props.node.data.score}</td></tr>
-                                             <tr><th>spread</th><td>{props.node.data.spread}</td></tr>
-                                         </tbody> :
-                                         <tbody>
-                                            <tr><th>id</th><td>{props.node.id}</td></tr>
-                                         </tbody>
-                                     }
-                                   </table>
-                                </div>
-                                <div className="card-footer text-muted">Number of connections: {props.node.degree}</div>
-                            </div>
-                        );
-                    }
+                    let NodeTemplate = tooltipInfo.NodeTemplate;
 
                     var el = document.createElement('div');
                     ReactDOM.render(<NodeTemplate node={node} />, el);
                     return el;
                 }
-            }, /*{
-                show: 'rightClickNode',
-                cssClass: 'sigma-tooltip',
-                position: 'right',
-                template:
-                '<div class="arrow"></div>' +
-                ' <div class="sigma-tooltip-header">{{label}}</div>' +
-                '  <div class="sigma-tooltip-body">' +
-                '   <p> Context menu for {{data.value}} </p>' +
-                '  </div>' +
-                ' <div class="sigma-tooltip-footer">Number of connections: {{degree}}</div>',
-                renderer: function(node, template) {
-                    node.degree = this.degree(node.id);
-                    return Mustache.render(template, node);
-                }
-            }*/],
-            /*stage: {
-                template:
-                '<div class="arrow"></div>' +
-                '<div class="sigma-tooltip-header"> Menu </div>'
-            }*/
+            }]
         };
         var tooltips = sigmajs.sigma.plugins.tooltips(s, s.renderers[0], tooltipConfig);
     }
@@ -307,38 +291,8 @@ export default class GraphViz extends React.PureComponent {
         return (
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
-                <div id="nodeSizePanel" style={{position: 'absolute', left: '10px', bottom: 0, width: '150px', height: '130px'}} className="card">
-                    <div className="card-block">
-                        <h6 className="card-title">Node size is</h6>
-                        <form>
-                            <div className="input-group input-group-sm">
-                                <label className="form-check-label">
-                                    <input id="param-frequency" name="nodeSizeParam" type="radio" value="frequency" className="form-check-input"
-                                            checked={this.state.sizeParam == 'frequency'}
-                                            onChange={() => this.setState({sizeParam: 'frequency'})}/>
-                                    frequency
-                                </label>
-                            </div>
-                            <div className="input-group input-group-sm">
-                                <label className="form-check-label">
-                                    <input id="param-spread" name="nodeSizeParam" type="radio" value="spread" className="form-check-input"
-                                           checked={this.state.sizeParam == 'spread'}
-                                           onChange={() => this.setState({sizeParam: 'spread'})}/>
-                                    spread
-                                </label>
-                            </div>
-                            <div className="input-group input-group-sm">
-                                <label className="form-check-label">
-                                    <input id="param-score" name="nodeSizeParam" type="radio" value="score" className="form-check-input"
-                                           checked={this.state.sizeParam == 'score'}
-                                           onChange={() => this.setState({sizeParam: 'score'})}/>
-                                    score
-                                </label>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
+                {this.renderSizeMenu()}
+               {/* <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
                     <div className="card-block small">
                         <div><kbd>spacebar</kbd> + <kbd>click</kbd> Multi-select</div>
                         <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
@@ -349,11 +303,44 @@ export default class GraphViz extends React.PureComponent {
                         <div><kbd>spacebar</kbd> + <kbd>i</kbd> Select isolated</div>
                         <div><kbd>spacebar</kbd> + <kbd>l</kbd> Select leaf</div>
                     </div>
-                </div>
+                </div>*/}
             </div>
         );
-
     }
+
+    renderSizeMenu = () => (
+        <div id="nodeSizePanel" style={{position: 'absolute', left: '10px', bottom: 0, width: '150px', height: '130px'}} className="card">
+            <div className="card-block">
+                <h6 className="card-title">Node size is</h6>
+                <form>
+                    <div className="input-group input-group-sm">
+                        <label className="form-check-label">
+                            <input id="param-frequency" name="nodeSizeParam" type="radio" value="frequency" className="form-check-input"
+                                   checked={this.state.sizeParam == 'frequency'}
+                                   onChange={() => this.setState({sizeParam: 'frequency'})}/>
+                            frequency
+                        </label>
+                    </div>
+                    <div className="input-group input-group-sm">
+                        <label className="form-check-label">
+                            <input id="param-spread" name="nodeSizeParam" type="radio" value="spread" className="form-check-input"
+                                   checked={this.state.sizeParam == 'spread'}
+                                   onChange={() => this.setState({sizeParam: 'spread'})}/>
+                            spread
+                        </label>
+                    </div>
+                    <div className="input-group input-group-sm">
+                        <label className="form-check-label">
+                            <input id="param-score" name="nodeSizeParam" type="radio" value="score" className="form-check-input"
+                                   checked={this.state.sizeParam == 'score'}
+                                   onChange={() => this.setState({sizeParam: 'score'})}/>
+                            score
+                        </label>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 
     emptyGraph() {
         return {

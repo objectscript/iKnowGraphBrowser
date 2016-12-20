@@ -26,7 +26,7 @@ module.exports = {
             {test: /\.gif$/, loader: 'url-loader?mimetype=image/gif'},
             {test: /\.png$/, loader: 'url-loader?mimetype=image/png'},
             {
-                test: /\.jsx$/,
+                test: /\.js.?$/,
                 exclude: /(node_modules)/,
                 loader: 'babel-loader',
                 query: {
@@ -37,7 +37,7 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            title: 'iKnowBrowser react demo',
+            title: 'iKnowBrowser demo',
             chunks: ['commons', 'reactDemo'],
             template: path.join(__dirname, 'src', 'examples', 'template.ejs'),
         }),

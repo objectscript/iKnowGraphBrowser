@@ -13,47 +13,66 @@ export default class GraphWorkspace extends React.PureComponent {
     };
     render() {
         return (
-            <div className="row">
-                {(this.state.filteredGraph && this.state.filteredGraph.nodes.length) > 0 ?
-                    <pair>
+                (this.state.filteredGraph && this.state.filteredGraph.nodes.length) > 0 ?
+                    <div className="row">
                         <div className="col-md-2 col-space">
-                            <div className="card">
-                                <div className="card-block">
-                                    <h4 className="card-title">Selected Nodes</h4>
-                                    <SelectedTable selectedNodes={this.state.selectedNodes} onSelected={this.onSelected}/>
-                                </div>
-                            </div>
+                            {this.selectedBlock()}
                         </div>
                         <div className="col-md-8 col-space">
-                            <div className="card">
-                                <div className="card-block">
-                                    <h4 className="card-title">Graph visualization</h4>
-                                    <GraphViz graph={this.state.filteredGraph} selectedNodes={this.state.selectedNodes}
-                                          onSelected={this.onSelected}/>
-                                </div>
-                            </div>
+                            {this.graphBlock()}
                         </div>
-                    </pair>
-                        :
-                    <div className="col-md-10">No data to visualize</div>
-                }
-                <div className="col-md-2 col-space">
-                    <div className="card">
-                        <div className="card-block">
-                            <h4 className="card-title">Filter</h4>
-                            <Filter graph={this.props.graph} onResult={this.onFilteredGraph} />
+                        <div className="col-md-2 col-space">
+                            {this.filterBlock()}
                         </div>
                     </div>
-                </div>
-            </div>
+                            :
+                    <div className="row" >
+                        <div className="col-md-10">No data to visualize</div>
+                        <div className="col-md-2 col-space">
+                            {this.filterBlock()}
+                        </div>
+                    </div>
+
         );
     }
 
+    selectedBlock = () => {
+        return <div className="card">
+            <div className="card-block">
+                <h4 className="card-title">Selected Nodes</h4>
+                <SelectedTable selectedNodes={this.state.selectedNodes} onSelected={this.onSelected}/>
+            </div>
+        </div>;
+    };
 
+    graphBlock = () => {
+        return <div className="card">
+            <div className="card-block">
+                <h4 className="card-title">Graph visualization</h4>
+                <GraphViz graph={this.state.filteredGraph} selectedNodes={this.state.selectedNodes}
+                          onSelectionAdd={this.onSelectionAdd} onSelectionRemove={this.onSelectionRemove}/>
+            </div>
+        </div>
+    };
 
-    onSelected = (nodes) => {
-        this.setState({selectedNodes : nodes});
+    filterBlock = () => {
+        return <div className="card">
+            <div className="card-block">
+                <h4 className="card-title">Filter</h4>
+                <Filter graph={this.props.graph} onResult={this.onFilteredGraph} />
+            </div>
+        </div>
     }
+
+    onSelectionAdd = (nodes) => {
+        var newSelected = _.unionBy(this.state.selectedNodes, nodes, (node)=>node.id);
+        this.setState({selectedNodes : newSelected});
+    };
+
+    onSelectionRemove = (nodes) => {
+        var newSelected = _.differenceBy(this.state.selectedNodes, nodes, node=>node.id);
+        this.setState({selectedNodes: newSelected});
+    };
 
     onFilteredGraph = (graph) => {
         this.setState({filteredGraph: graph});
