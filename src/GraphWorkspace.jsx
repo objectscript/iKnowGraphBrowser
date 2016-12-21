@@ -9,37 +9,29 @@ export default class GraphWorkspace extends React.PureComponent {
     };
     state = {
         selectedNodes: [],
-        filteredGraph: {nodes: [], edges: []}
     };
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.state.filteredGraph != prevState.filteredGraph) {
+        if (this.props.graph != prevProps.graph) {
             this.setState({selectedNodes:[]})
         }
     }
 
     render() {
         return (
-                (this.state.filteredGraph && this.state.filteredGraph.nodes.length) > 0 ?
+                (this.props.graph && this.props.graph.nodes.length) > 0 ?
                     <div className="row">
-                        <div className="col-md-2 col-space">
+                        <div className="col-md-3 col-space">
                             {this.selectedBlock()}
                         </div>
-                        <div className="col-md-8 col-space">
+                        <div className="col-md-9 col-space">
                             {this.graphBlock()}
-                        </div>
-                        <div className="col-md-2 col-space">
-                            {this.filterBlock()}
                         </div>
                     </div>
                             :
                     <div className="row" >
-                        <div className="col-md-10">No data to visualize</div>
-                        <div className="col-md-2 col-space">
-                            {this.filterBlock()}
-                        </div>
+                        <div className="col-md-12">No data to visualize</div>
                     </div>
-
         );
     }
 
@@ -58,20 +50,11 @@ export default class GraphWorkspace extends React.PureComponent {
         return <div className="card">
             <div className="card-block">
                 <h4 className="card-title">Graph visualization</h4>
-                <GraphViz graph={this.state.filteredGraph} selectedNodes={this.state.selectedNodes}
+                <GraphViz graph={this.props.graph} selectedNodes={this.state.selectedNodes}
                           onSelectionAdd={this.onSelectionAdd} onSelectionRemove={this.onSelectionRemove}/>
             </div>
         </div>
     };
-
-    filterBlock = () => {
-        return <div className="card">
-            <div className="card-block">
-                <h4 className="card-title">Filter</h4>
-                <Filter graph={this.props.graph} onResult={this.onFilteredGraph} />
-            </div>
-        </div>
-    }
 
     computeDescendants(graph, currentDescendants, allDescendants = []) {
         if (allDescendants.length == 0) allDescendants = currentDescendants;
@@ -84,7 +67,7 @@ export default class GraphWorkspace extends React.PureComponent {
     }
 
     onTableRemoved = (node, recursive) => {
-        const affectedNodes = (recursive) ? this.computeDescendants(this.state.filteredGraph, [node.nodeId]) : [node.nodeId];
+        const affectedNodes = (recursive) ? this.computeDescendants(this.props.graph, [node.nodeId]) : [node.nodeId];
         let newSelected = _.filter(this.state.selectedNodes, node => !affectedNodes.includes(node.nodeId));
         this.setState({selectedNodes: newSelected});
     };
@@ -99,7 +82,5 @@ export default class GraphWorkspace extends React.PureComponent {
         this.setState({selectedNodes: newSelected});
     };
 
-    onFilteredGraph = (graph) => {
-        this.setState({filteredGraph: graph});
-    }
+
 }

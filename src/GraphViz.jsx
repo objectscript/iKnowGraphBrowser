@@ -15,7 +15,10 @@ export default class GraphViz extends React.PureComponent {
         onSelected: React.PropTypes.func.isRequired
     };
     state = {
-        sizeParam: 'frequency'
+        sizeParam: 'frequency',
+        frequencyFilter: 0,
+        spreadFilter: 0,
+        scoreFilter: 0
     };
 
     registerSigmaElement(element) {
@@ -50,6 +53,11 @@ export default class GraphViz extends React.PureComponent {
         if (prevProps.selectedNodes != this.props.selectedNodes) {
             this.updateSelection();
         }
+        if (prevState.frequencyFilter != this.state.frequencyFilter ||
+            prevState.spreadFilter != this.state.spreadFilter ||
+            prevState.scoreFilter != this.state.scoreFilter) {
+            this.updateFilter();
+        }
     }
 
     createSigmaInstance(node) {
@@ -72,8 +80,22 @@ export default class GraphViz extends React.PureComponent {
         });
         this.addTooltip(sigma);
         this.enableCustomSelection(sigma);
+        this.addFilter(sigma);
         return sigma;
     }
+
+    addFilter = (sigma) => {
+        this.filter = sigmajs.sigma.plugins.filter(sigma);
+    };
+
+    updateFilter = () => {
+        this.filter.undo().nodesBy((node) => {
+                return (this.frequencyFn(node) ? this.frequencyFn(node) > this.state.frequencyFilter : true) &&
+                    (this.spreadFn(node) ? this.spreadFn(node) > this.state.spreadFilter : true) &&
+                    (this.scoreFn(node) ? this.scoreFn(node) > this.state.scoreFilter : true);
+            }
+        ).apply();
+    };
 
     updateSelection = () => {
         this.activeState.dropNodes();
@@ -130,17 +152,37 @@ export default class GraphViz extends React.PureComponent {
     updateSizes() {
         let paramFn;
         switch (this.state.sizeParam) {
-            case 'frequency': paramFn = node => node.data && node.data.frequency ? node.data.frequency : 1; break;
-            case 'spread': paramFn = node => node.data && node.data.spread ? node.data.spread : 1; break;
-            case 'score': paramFn = node => node.data && node.data.score ? node.data.score : 1; break;
+            case 'frequency': paramFn = this.frequencyFn; break;
+            case 'spread': paramFn = this.spreadFn; break;
+            case 'score': paramFn = this.scoreFn; break;
         }
-        const stat = utils.computeMinMax(this.sigma.graph.nodes(), paramFn);
+        let stat = this.getRange(paramFn);
         const {mn: mnStat, mx: mxStat} = stat;
         this.sigma.graph.nodes().forEach(node => {
             node.size = node.data ? utils.normalizeCoeff(paramFn(node), mnStat, mxStat, 100) : 120
         });
         this.sigma.refresh();
     }
+
+    frequencyFn(node) {
+        return node.data && node.data.frequency ? node.data.frequency : undefined;
+    };
+
+    spreadFn(node) {
+        return node.data && node.data.spread ? node.data.spread : undefined;
+    };
+
+    scoreFn(node) {
+        return node.data && node.data.score ? node.data.score : undefined;
+    };
+
+    getRange = (paramFn) => {
+        if (this.sigma && this.sigma.graph) {
+            return utils.computeMinMax(this.sigma.graph.nodes(), paramFn);
+        } else {
+            return {mn: undefined, mx: undefined}
+        }
+    };
 
     prepareGraph(g, srcData) {
         // const stat = utils.computeMinMax(srcData.nodes, node => node.entities ? node.entities[0].frequency : 1);
@@ -247,6 +289,7 @@ export default class GraphViz extends React.PureComponent {
             <div>
                 <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
                 {this.renderSizeMenu()}
+                {this.renderFilterPanel()}
                {/* <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
                     <div className="card-block small">
                         <div><kbd>spacebar</kbd> + <kbd>click</kbd> Multi-select</div>
@@ -263,10 +306,36 @@ export default class GraphViz extends React.PureComponent {
         );
     }
 
+    renderFilterPanel = () => (
+        <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '240px', height: '130px'}} className="card">
+            <div className="card-block">
+                <h6 className="card-title">Filter</h6>
+                    <div className="row small">
+                        <label htmlFor="frequency-filter" style={{width: 70, marginBottom: 2}}>frequency</label>
+                        <input id="frequency-filter" type="range" value={this.state.frequencyFilter} max={this.getRange(this.frequencyFn).mx} style={{height: 10}}
+                               onChange={(e) => this.setState({frequencyFilter: e.target.value})}/>
+                        <span style={{marginLeft: 5}}>{this.state.frequencyFilter}</span>
+                    </div>
+                    <div className="row small">
+                        <label htmlFor="spread-filter" style={{width: 70, marginBottom: 2}}>spread</label>
+                        <input id="spread-filter" type="range" value={this.state.spreadFilter} max={this.getRange(this.spreadFn).mx} style={{height: 10}}
+                               onChange={(e) => this.setState({spreadFilter: e.target.value})}/>
+                        <span style={{marginLeft: 5}}>{this.state.spreadFilter}</span>
+                    </div>
+                    <div className="row small">
+                        <label htmlFor="score-filter" style={{width: 70, marginBottom: 2}}>score</label>
+                        <input id="score-filter" type="range" value={this.state.scoreFilter} max={this.getRange(this.scoreFn).mx} style={{height: 10}}
+                               onChange={(e) => this.setState({scoreFilter: e.target.value})}/>
+                        <span style={{marginLeft: 5}}>{this.state.scoreFilter}</span>
+                    </div>
+            </div>
+        </div>
+    );
+
     renderSizeMenu = () => (
         <div id="nodeSizePanel" style={{position: 'absolute', left: '10px', bottom: 0, width: '150px', height: '130px'}} className="card">
             <div className="card-block">
-                <h6 className="card-title">Node size is</h6>
+                <h6 className="card-title">Node size</h6>
                 <form>
                     <div className="input-group input-group-sm">
                         <label className="form-check-label">

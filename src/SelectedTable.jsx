@@ -12,12 +12,12 @@ export default class SelectedTable extends React.Component {
                 <div style={{height: 635, overflowY: 'auto'}}>
                     <table className="table table-sm small">
                         <tbody>
-                        <tr><th>id</th><th>value</th><th>parent</th><th>link</th>{/*<th>frq</th><th>sc</th><th>sprd</th>*/}</tr>
+                        <tr><th>id</th><th>value</th><th>parent</th><th>link</th><th>&nbsp;</th>{/*<th>frq</th><th>sc</th><th>sprd</th>*/}</tr>
                         {_(this.props.selectedNodes).sortBy(node => node.value).map(node =>
                             <tr key={node.id}>
                                 <td>{node.id}</td>
                                 <td style={{maxWidth: 100}}>{node.value}</td>
-                                <td>{node.parentLabel}</td>
+                                <td style={{maxWidth: 100}}>{node.parentLabel}</td>
                                 <td>{node.edgeType}</td>
                                 {/*<td className="text-xs-right">{node.frequency}</td>
                                 <td className="text-xs-right">{node.score}</td>
