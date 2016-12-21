@@ -1,5 +1,6 @@
 import React from 'react'
 import GraphWorkspace from './GraphWorkspace'
+require('./styles.scss')
 
 export default class ScenarioSelector extends React.Component {
 
@@ -13,8 +14,8 @@ export default class ScenarioSelector extends React.Component {
 
     render() {
         return (
-            <div className="container-fluid">
-                <div className="row">
+            <div className="container-fluid demo-root">
+                <div className="row scenario-selection">
                     <div className="card col-md-12">
                         <div className="card-block">
                             <h4 className="card-title">Scenario Selection</h4>

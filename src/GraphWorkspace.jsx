@@ -20,16 +20,12 @@ export default class GraphWorkspace extends React.PureComponent {
     render() {
         return (
                 (this.props.graph && this.props.graph.nodes.length) > 0 ?
-                    <div className="row">
-                        <div className="col-md-3 col-space">
-                            {this.selectedBlock()}
-                        </div>
-                        <div className="col-md-9 col-space">
-                            {this.graphBlock()}
-                        </div>
+                    <div className="row graph-workspace">
+                        {this.selectedBlock()}
+                        {this.graphBlock()}
                     </div>
                             :
-                    <div className="row" >
+                    <div className="row graph-workspace" >
                         <div className="col-md-12">No data to visualize</div>
                     </div>
         );
@@ -38,8 +34,8 @@ export default class GraphWorkspace extends React.PureComponent {
 
 
     selectedBlock = () => {
-        return <div className="card">
-            <div className="card-block">
+        return <div className="card selected-nodes-panel">
+            <div className="card-block selected-nodes-block">
                 <h4 className="card-title">Selected Nodes</h4>
                 <SelectedTable selectedNodes={this.state.selectedNodes} onRemoved={this.onTableRemoved}/>
             </div>
@@ -47,8 +43,8 @@ export default class GraphWorkspace extends React.PureComponent {
     };
 
     graphBlock = () => {
-        return <div className="card">
-            <div className="card-block">
+        return <div className="card graph-panel">
+            <div className="card-block graph-block">
                 <h4 className="card-title">Graph visualization</h4>
                 <GraphViz graph={this.props.graph} selectedNodes={this.state.selectedNodes}
                           onSelectionAdd={this.onSelectionAdd} onSelectionRemove={this.onSelectionRemove}/>

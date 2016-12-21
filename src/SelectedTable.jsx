@@ -1,15 +1,15 @@
 import React from 'react'
 import * as fileSaver from 'file-saver'
-
+require('./styles.scss')
 export default class SelectedTable extends React.Component {
     propTypes: {
         selectedNodes: React.PropTypes.array.isRequired
     };
     render() {
         return (
-            <div>
+            <div className="flex-column">
                 <div className="text-muted">Count: {this.props.selectedNodes.length} nodes</div>
-                <div style={{height: 635, overflowY: 'auto'}}>
+                <div style={{overflowY: 'auto'}}>
                     <table className="table table-sm small">
                         <tbody>
                         <tr><th>id</th><th>value</th><th>parent</th><th>link</th><th>&nbsp;</th>{/*<th>frq</th><th>sc</th><th>sprd</th>*/}</tr>
@@ -28,7 +28,7 @@ export default class SelectedTable extends React.Component {
                         </tbody>
                     </table>
                 </div>
-                <button type="button" className="btn btn-primary" onClick={() => console.log(this.exportCsv())}>Export CSV</button>
+                <button type="button" className="btn btn-primary export-css" onClick={() => console.log(this.exportCsv())} disabled={this.props.selectedNodes.length == 0}>Export CSV</button>
             </div>
         );
     }

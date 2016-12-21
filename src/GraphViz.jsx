@@ -286,8 +286,8 @@ export default class GraphViz extends React.PureComponent {
 
     render() {
         return (
-            <div>
-                <div id="graph" style={{width: '100%', height: '700px'}} ref={(element) => this.registerSigmaElement(element)}/>
+            <div className="graph-view">
+                <div id="graph" className='graph-container' ref={(element) => this.registerSigmaElement(element)}/>
                 {this.renderSizeMenu()}
                 {this.renderFilterPanel()}
                {/* <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">

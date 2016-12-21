@@ -1,0 +1,72 @@
+.form-inline .form-group {
+  margin-right: 10px;
+}
+
+.table-sm td, .table-sm th {
+  padding: .2rem;
+}
+
+.form-inline label,
+.form-inline .form-control {
+  margin-right: 5px;
+}
+
+.demo-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.scenario-selection {
+  flex: 0 0 auto;
+}
+
+.graph-workspace {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.selected-nodes-panel {
+  flex: 0 0 400px;
+  margin-right: 20px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.selected-nodes-block {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.export-css {
+  flex: 0 0 auto;
+  margin: 20px 0 0;
+}
+
+.graph-panel {
+  flex: 1 1 100%;
+  display: flex;
+}
+
+.graph-block {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-view {
+  display: flex;
+  flex: 1 1 100%;
+}
+
+.graph-container {
+  width: 100%;
+}

@@ -23,7 +23,7 @@ module.exports = {
             {test: /\.gif$/, loader: 'url-loader?mimetype=image/gif'},
             {test: /\.png$/, loader: 'url-loader?mimetype=image/png'},
             {
-                test: /\.js$/,
+                test: /\.js.?$/,
                 exclude: /(node_modules)/,
                 loader: 'babel-loader',
                 query: {
