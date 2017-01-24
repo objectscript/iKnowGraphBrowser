@@ -1,70 +1,129 @@
-import React from 'react'
-import GraphWorkspace from './GraphWorkspace'
+import React from 'react';
+import { computeMinMax } from './utils'
+
+import './scss/filter.scss';
 
 export default class Filter extends React.PureComponent {
     propTypes: {
         graph: React.PropTypes.any.isRequired,
-        onResult: React.PropTypes.func.isRequired
-    }
-    state = {
-        minFrequency: 0,
-        minScore: 0,
-        minSpread: 0
+        onChange: React.PropTypes.func.isRequired,
     };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            value: '',
+            frequency: '0',
+            spread: '0',
+            score: '0',
+        };
+    }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.graph != this.props.graph) {
-            this.setState({
-                minFrequency: 0,
-                minScore: 0,
-                minSpread: 0
-            });
-            this.props.onResult(nextProps.graph);
+        if (!_.isEqual(nextProps.graph, this.props.graph)) {
+            this.clearFilter();
         }
     }
 
-    updateFilter = () => {
-        if (this.props.graph.nodes) {
-            const removeNodes = _(this.props.graph.nodes).filter(node => {
-                if (node.entities) {
-                    const entity = node.entities[0];
-                    return !(entity.frequency > this.state.minFrequency && entity.spread > this.state.minSpread && (!entity.score || entity.score > this.state.minScore));
-                } else return false;
-            }).map(node => node.id).value();
-            const filteredGraph = {
-                nodes: _(this.props.graph.nodes).filter(node => !_.includes(removeNodes, node.id)).value(),
-                edges: _(this.props.graph.edges).filter(edge => !(_.includes(removeNodes, edge.origin) || _.includes(removeNodes, edge.destination))).value()
-            };
-            this.props.onResult(filteredGraph);
-        } else {
-            this.props.onResult(this.emptyGraph());
+    frequencyFn = node => {
+        return node && node.entities && node.entities[0].frequency ? node.entities[0].frequency : undefined;
+    };
+
+    spreadFn = node => {
+        return node && node.entities && node.entities[0].spread ? node.entities[0].spread : undefined;
+    };
+
+    scoreFn = node => {
+        return node && node.entities && node.entities[0].score ? node.entities[0].score : undefined;
+    };
+
+    getRange = paramFn => {
+        return computeMinMax(this.props.graph.nodes, paramFn);
+    };
+
+    onChange = () => {
+        const {value, frequency, spread, score} = this.state;
+
+        if (frequency.length && spread.length && score.length) {
+            this.props.onChange({
+                value,
+                frequency: parseInt(frequency),
+                spread: parseInt(spread),
+                score: parseInt(score),
+            });
         }
     };
 
-    emptyGraph() {
-        return { nodes: [], edges: []};
-    }
+    clearFilter = () => {
+        this.setState({
+            value: '',
+            frequency: '0',
+            spread: '0',
+            score: '0',
+        }, this.onChange);
+    };
 
     render() {
-        return (
-            <form>
-                <div className="form-group">
-                    <label htmlFor="frequency">Min Frequency</label>
-                    <input id="frequency" className="form-control" type="text" value={this.state.minFrequency ? this.state.minFrequency : 0}
-                           onChange={e => {this.setState({minFrequency: parseFloat(e.target.value)}); }} />
+        const {value, frequency, spread, score} = this.state;
+        const frequencyMax = this.getRange(this.frequencyFn).mx;
+        const spreadMax = this.getRange(this.spreadFn).mx;
+        const scoreMax = this.getRange(this.scoreFn).mx;
+
+        return <form className="filter">
+            <div className="filter__content">
+                <div className="filter__col">
+                    <label className="filter__label col-form-label col-form-label-sm">value</label>
+                    <input type="text"
+                           className="filter__control form-control form-control-sm"
+                           value={value}
+                           onChange={e => this.setState({value: e.target.value}, this.onChange)}/>
                 </div>
-                <div className="form-group">
-                    <label htmlFor="score">Min Score</label>
-                    <input id="score" className="form-control" type="text" value={this.state.minScore}
-                           onChange={e => {this.setState({minScore: parseFloat(e.target.value)}); }} />
+                <div className={frequency.length ? "filter__col" : "filter__col has-danger"}>
+                    <label className="filter__label col-form-label col-form-label-sm">frequency</label>
+                    <input type="range"
+                           className="filter__control"
+                           value={frequency.length ? parseInt(frequency) : 0}
+                           max={frequencyMax}
+                           onChange={e => this.setState({frequency: e.target.value}, this.onChange)}/>
+                    <input type="number"
+                           className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
+                           value={frequency}
+                           min={0}
+                           max={frequencyMax}
+                           onChange={e => this.setState({frequency: e.target.value}, this.onChange)}/>
                 </div>
-                <div className="form-group">
-                    <label htmlFor="spread">Min Spread</label>
-                    <input id="spread" className="form-control" type="text" value={this.state.minSpread}
-                           onChange={e => {this.setState({minSpread: parseFloat(e.target.value)}); }} />
+                <div className={spread.length ? "filter__col" : "filter__col has-danger"}>
+                    <label className="filter__label col-form-label col-form-label-sm">spread</label>
+                    <input type="range"
+                           className="filter__control"
+                           value={spread.length ? parseInt(spread) : 0}
+                           max={spreadMax}
+                           onChange={e => this.setState({spread: e.target.value}, this.onChange)}/>
+                    <input type="number"
+                           className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
+                           value={spread}
+                           min={0}
+                           max={spreadMax}
+                           onChange={e => this.setState({spread: e.target.value}, this.onChange)}/>
                 </div>
-                <input type="button" className="btn btn-primary" onClick={this.updateFilter} value="Update graph"/>
-            </form>
-        );
+                <div className={score.length ? "filter__col" : "filter__col has-danger"}>
+                    <label className="filter__label col-form-label col-form-label-sm">score</label>
+                    <input type="range"
+                           className="filter__control"
+                           value={score.length ? parseInt(score) : 0}
+                           max={scoreMax}
+                           onChange={e => this.setState({score: e.target.value}, this.onChange)}/>
+                    <input type="number"
+                           className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
+                           value={score}
+                           min={0}
+                           max={scoreMax}
+                           onChange={e => this.setState({score: e.target.value}, this.onChange)}/>
+                </div>
+            </div>
+            <button type="button" className="filter__btn btn btn-secondary btn-sm" onClick={this.clearFilter}>
+                Clear filter
+            </button>
+        </form>;
     }
 }

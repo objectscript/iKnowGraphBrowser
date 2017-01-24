@@ -27,16 +27,10 @@
   flex-wrap: nowrap;
 }
 
-.selected-nodes-panel {
+.nodes-table-container {
   flex: 0 0 400px;
   margin-right: 20px;
   width: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-.selected-nodes-block {
-  flex: 1 1 100%;
   display: flex;
   flex-direction: column;
 }
@@ -46,20 +40,9 @@
   flex-direction: column;
 }
 
-.export-css {
-  flex: 0 0 auto;
-  margin: 20px 0 0;
-}
-
 .graph-panel {
   flex: 1 1 100%;
   display: flex;
-}
-
-.graph-block {
-  flex: 1 1 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .graph-view {
@@ -69,4 +52,16 @@
 
 .graph-container {
   width: 100%;
+}
+
+.main-container {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.filter-container {
+  flex: 0 0 auto;
+  margin-bottom: 20px;
 }
