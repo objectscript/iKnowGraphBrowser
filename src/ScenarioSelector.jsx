@@ -10,7 +10,20 @@ export default class ScenarioSelector extends React.Component {
         graph: undefined,
         fetching: false,
         msg: "",
+        error: undefined,
     }
+
+    renderError = () => {
+        const {error} = this.state;
+
+        return error
+            ? (
+                <div className="form-group has-danger">
+                    <div className="form-control-feedback">Error: {error}</div>
+                </div>
+            )
+            : null;
+    };
 
     render() {
         return (
@@ -31,7 +44,10 @@ export default class ScenarioSelector extends React.Component {
                                             <option value="similar">similar</option>
                                         </select>
                                     </div>
-                                    <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
+                                    <div className="form-group">
+                                        <input type="button" onClick={this.onGo} value="Go" className="btn btn-primary"/>
+                                    </div>
+                                    {this.renderError()}
                                     {/*<div className="text-xs-center">{this.state.msg}</div>*/}
                                     {this.state.fetching ? <progress className="progress" value="50" max="100"></progress> : undefined}
                                 </form>
@@ -52,14 +68,27 @@ export default class ScenarioSelector extends React.Component {
     };
 
     onGo = () => {
-        this.setState({msg: 'Fetching data...', fetching: true});0
-        fetch(this.state.scenario + '/' + this.state.seed).
-            then(result => result.json()).
-            then(result => {
-                this.setState({msg: "Fetching done.", fetching: false, graph: this.prepareGraph(result.graph)});
-            }
-        )
-    }
+        this.setState({msg: 'Fetching data...', fetching: true, error: undefined});
+        fetch(this.state.scenario + '/' + this.state.seed)
+            .then(result => {
+                if (!result.ok) {
+                    throw Error(result.statusText);
+                }
+
+                return result.json();
+            })
+            .then(result => {
+                this.setState({
+                    msg: "Fetching done.",
+                    fetching: false,
+                    graph: this.prepareGraph(result.graph),
+                    error: undefined,
+                });
+            })
+            .catch(e => {
+                this.setState({msg: "Fetching failed.", fetching: false, graph: undefined, error: e.message});
+            });
+    };
 
     prepareGraph = (graph) => {
         graph.nodes.push(
