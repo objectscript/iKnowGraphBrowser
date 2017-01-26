@@ -17,6 +17,7 @@ export default class Filter extends React.PureComponent {
             spread: '0',
             score: '0',
         };
+        this.onChangeDebounced = _.debounce(this.onChange, 200);
     }
 
     componentWillReceiveProps(nextProps) {
@@ -84,7 +85,7 @@ export default class Filter extends React.PureComponent {
                            className="filter__control"
                            value={frequency.length ? parseInt(frequency) : 0}
                            max={frequencyMax}
-                           onChange={e => this.setState({frequency: e.target.value}, this.onChange)}/>
+                           onChange={e => this.setState({frequency: e.target.value}, () => this.onChangeDebounced())}/>
                     <input type="number"
                            className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
                            value={frequency}
@@ -98,7 +99,7 @@ export default class Filter extends React.PureComponent {
                            className="filter__control"
                            value={spread.length ? parseInt(spread) : 0}
                            max={spreadMax}
-                           onChange={e => this.setState({spread: e.target.value}, this.onChange)}/>
+                           onChange={e => this.setState({spread: e.target.value}, () => this.onChangeDebounced())}/>
                     <input type="number"
                            className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
                            value={spread}
@@ -112,7 +113,7 @@ export default class Filter extends React.PureComponent {
                            className="filter__control"
                            value={score.length ? parseInt(score) : 0}
                            max={scoreMax}
-                           onChange={e => this.setState({score: e.target.value}, this.onChange)}/>
+                           onChange={e => this.setState({score: e.target.value}, () => this.onChangeDebounced())}/>
                     <input type="number"
                            className="form-control form-control-sm filter__value col-form-label col-form-label-sm"
                            value={score}
