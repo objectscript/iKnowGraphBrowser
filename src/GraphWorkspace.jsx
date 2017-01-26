@@ -1,6 +1,6 @@
 import React from 'react'
 import GraphViz from './GraphViz'
-import SelectedTable from './SelectedTable'
+import NodesTable from './NodesTable'
 import Filter from './Filter'
 
 export default class GraphWorkspace extends React.PureComponent {
@@ -9,6 +9,12 @@ export default class GraphWorkspace extends React.PureComponent {
     };
     state = {
         selectedNodes: [],
+        filter: {
+            value: '',
+            frequency: 0,
+            spread: 0,
+            score: 0,
+        },
     };
 
     componentDidUpdate(prevProps, prevState) {
@@ -20,9 +26,12 @@ export default class GraphWorkspace extends React.PureComponent {
     render() {
         return (
                 (this.props.graph && this.props.graph.nodes.length) > 0 ?
-                    <div className="row graph-workspace">
-                        {this.selectedBlock()}
-                        {this.graphBlock()}
+                    <div className="row main-container">
+                        {this.filterBlock()}
+                        <div className="graph-workspace">
+                            {this.nodesBlock()}
+                            {this.graphBlock()}
+                        </div>
                     </div>
                             :
                     <div className="row graph-workspace" >
@@ -31,24 +40,29 @@ export default class GraphWorkspace extends React.PureComponent {
         );
     }
 
+    filterBlock = () => {
+        return <div className="filter-container">
+            <Filter graph={this.props.graph} onChange={this.onFilterChange}/>
+        </div>
+    };
 
-
-    selectedBlock = () => {
-        return <div className="card selected-nodes-panel">
-            <div className="card-block selected-nodes-block">
-                <h4 className="card-title">Selected Nodes</h4>
-                <SelectedTable selectedNodes={this.state.selectedNodes} onRemoved={this.onTableRemoved}/>
-            </div>
+    nodesBlock = () => {
+        return <div className="card nodes-table-container">
+            <NodesTable graph={this.props.graph}
+                        filter={this.state.filter}
+                        selectedNodes={this.state.selectedNodes}
+                        onSelectionAdd={this.onSelectionAdd}
+                        onSelectionRemove={this.onSelectionRemove}/>
         </div>;
     };
 
     graphBlock = () => {
         return <div className="card graph-panel">
-            <div className="card-block graph-block">
-                <h4 className="card-title">Graph visualization</h4>
-                <GraphViz graph={this.props.graph} selectedNodes={this.state.selectedNodes}
-                          onSelectionAdd={this.onSelectionAdd} onSelectionRemove={this.onSelectionRemove}/>
-            </div>
+            <GraphViz graph={this.props.graph}
+                      filter={this.state.filter}
+                      selectedNodes={this.state.selectedNodes}
+                      onSelectionAdd={this.onSelectionAdd}
+                      onSelectionRemove={this.onSelectionRemove}/>
         </div>
     };
 
@@ -69,14 +83,17 @@ export default class GraphWorkspace extends React.PureComponent {
     };
 
     onSelectionAdd = (nodes) => {
-        var newSelected = _.unionBy(this.state.selectedNodes, nodes, (node)=>node.nodeId);
-        this.setState({selectedNodes : newSelected});
-    };
-
-    onSelectionRemove = (nodes) => {
-        var newSelected = _.differenceBy(this.state.selectedNodes, nodes, node=>node.nodeId);
+        const newSelected = _.unionBy(this.state.selectedNodes, nodes);
         this.setState({selectedNodes: newSelected});
     };
 
+    onSelectionRemove = (nodes) => {
+        const newSelected = _.differenceBy(this.state.selectedNodes, nodes);
+        this.setState({selectedNodes: newSelected});
+    };
+
+    onFilterChange = filter => {
+        this.setState({filter});
+    };
 
 }

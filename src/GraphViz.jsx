@@ -7,24 +7,38 @@ import * as tooltipInfo from "./tooltipInfo";
 
 import * as plugins from 'imports-loader?sigma=linkurious,this=>window!linkurious/dist/plugins'
 
+import './scss/graph.scss';
 
+const MODES = ['all', 'filtered', 'selected'];
 
 export default class GraphViz extends React.PureComponent {
     propTypes: {
         graph: React.PropTypes.any.isRequired,
-        onSelected: React.PropTypes.func.isRequired
+        onSelected: React.PropTypes.func.isRequired,
+        filter: React.PropTypes.any.isRequired,
+        selectedNodes: React.PropTypes.array.isRequired,
     };
     state = {
         sizeParam: 'frequency',
-        frequencyFilter: 0,
-        spreadFilter: 0,
-        scoreFilter: 0
+        mode: 'filtered',
     };
 
     registerSigmaElement(element) {
         //element could be null and we would want to cleanup
         this.sigmaNode = element;
     }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        const {graph, selectedNodes} = this.props;
+        const {mode} = this.state;
+
+        return !(
+            mode === nextState.mode &&
+            (mode === 'all' || mode === 'selected') &&
+            _.isEqual(graph, nextProps.graph) &&
+            _.isEqual(selectedNodes, nextProps.selectedNodes)
+        );
+    };
 
     componentDidMount() {
         this.sigma = this.createSigmaInstance();
@@ -48,15 +62,13 @@ export default class GraphViz extends React.PureComponent {
             this.sigma.refresh();
             this.resetLayout();
             this.initGraph();
+            this.update();
         }
         if (prevState.sizeParam != this.state.sizeParam) this.updateSizes();
-        if (prevProps.selectedNodes != this.props.selectedNodes) {
-            this.updateSelection();
-        }
-        if (prevState.frequencyFilter != this.state.frequencyFilter ||
-            prevState.spreadFilter != this.state.spreadFilter ||
-            prevState.scoreFilter != this.state.scoreFilter) {
-            this.updateFilter();
+
+        if (!_.isEqual(prevProps.selectedNodes, this.props.selectedNodes) ||
+            !_.isEqual(prevProps.filter, this.props.filter)) {
+            this.update();
         }
     }
 
@@ -88,18 +100,34 @@ export default class GraphViz extends React.PureComponent {
         this.filter = sigmajs.sigma.plugins.filter(sigma);
     };
 
+    update = () => {
+      this.updateFilter();
+      this.updateSelection();
+    };
+
     updateFilter = () => {
-        this.filter.undo().nodesBy((node) => {
-                return (this.frequencyFn(node) ? this.frequencyFn(node) > this.state.frequencyFilter : true) &&
-                    (this.spreadFn(node) ? this.spreadFn(node) > this.state.spreadFilter : true) &&
-                    (this.scoreFn(node) ? this.scoreFn(node) > this.state.scoreFilter : true);
-            }
-        ).apply();
+        const {filter, selectedNodes} = this.props;
+        const {value, frequency, spread, score} = filter;
+        const {mode} = this.state;
+
+        if (mode === 'all') {
+            this.filter.undo().apply();
+        } else if (mode === 'filtered') {
+            this.filter.undo().nodesBy((node) => {
+                return (node.label.indexOf(value) === 0) &&
+                    (this.frequencyFn(node) ? this.frequencyFn(node) > frequency : true) &&
+                    (this.spreadFn(node) ? this.spreadFn(node) > spread : true) &&
+                    (this.scoreFn(node) ? this.scoreFn(node) > score : true);
+                }
+            ).apply();
+        } else if (mode === 'selected') {
+            this.filter.undo().nodesBy(node => selectedNodes.indexOf(node.id) !== -1).apply();
+        }
     };
 
     updateSelection = () => {
         this.activeState.dropNodes();
-        this.activeState.addNodes(_.map(this.props.selectedNodes, node => node.nodeId));
+        this.activeState.addNodes(this.props.selectedNodes);
         this.sigma.refresh();
     };
 
@@ -112,14 +140,6 @@ export default class GraphViz extends React.PureComponent {
         sigma.bind('clickNode', this.onClick);
     }
 
-    transformNode(node) {
-        const newNode = node.data ? node.data : {id: node.id, value: node.label};
-        newNode.nodeId = node.id;
-        newNode.parentLabel = node.parentLabel;
-        newNode.edgeType = node.edgeType;
-        return newNode;
-    }
-
     onClick = (event) => {
         //If selecting with shift key, select all descendants
         let affectedNodes = [];
@@ -129,12 +149,10 @@ export default class GraphViz extends React.PureComponent {
             affectedNodes = [event.data.node.id];
         }
 
-        //transform nodeId list to nodes
-        const eventNodes = _.chain(affectedNodes).map(nodeId => this.sigma.graph.nodes(nodeId)).map(this.transformNode).value();
-        if (!_.find(this.props.selectedNodes, (node) => node.nodeId === event.data.node.id)) {
-            this.props.onSelectionAdd(eventNodes);
+        if (this.props.selectedNodes.indexOf(event.data.node.id) === -1) {
+            this.props.onSelectionAdd(affectedNodes);
         } else {
-            this.props.onSelectionRemove(eventNodes);
+            this.props.onSelectionRemove(affectedNodes);
         }
     };
 
@@ -285,52 +303,45 @@ export default class GraphViz extends React.PureComponent {
     }
 
     render() {
+        const {mode} = this.state;
+
         return (
-            <div className="graph-view">
-                <div id="graph" className='graph-container' ref={(element) => this.registerSigmaElement(element)}/>
-                {this.renderSizeMenu()}
-                {this.renderFilterPanel()}
-               {/* <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
-                    <div className="card-block small">
-                        <div><kbd>spacebar</kbd> + <kbd>click</kbd> Multi-select</div>
-                        <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
-                        <div><kbd>spacebar</kbd> + <kbd>a</kbd> Select/deselect all</div>
-                        <div><kbd>spacebar</kbd> + <kbd>u</kbd> Deselect all</div>
-                        <div><kbd>spacebar</kbd> + <kbd>Del</kbd> Drop selected</div>
-                        <div><kbd>spacebar</kbd> + <kbd>e</kbd> Select neighbors</div>
-                        <div><kbd>spacebar</kbd> + <kbd>i</kbd> Select isolated</div>
-                        <div><kbd>spacebar</kbd> + <kbd>l</kbd> Select leaf</div>
+            <div className="card-block graph-block">
+                <div className="graph-block__header">
+                    <h4 className="card-title graph-block__caption">Graph visualization</h4>
+                    <div className="btn-group graph-block__modes">
+                        {MODES.map((item, index) => {
+                            const className = mode === item ? "btn btn-success btn-sm" : "btn btn-secondary btn-sm";
+                            return (
+                                <button key={index}
+                                        type="button"
+                                        className={className}
+                                        onClick={() => this.setState({mode: item}, this.update)}>
+                                    {item}
+                                </button>
+                            );
+                        })}
                     </div>
-                </div>*/}
+                </div>
+                <div className="graph-view">
+                    <div id="graph" className='graph-container' ref={(element) => this.registerSigmaElement(element)}/>
+                    {this.renderSizeMenu()}
+                    {/* <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '260px', height: '170px'}} className="card">
+                     <div className="card-block small">
+                     <div><kbd>spacebar</kbd> + <kbd>click</kbd> Multi-select</div>
+                     <div><kbd>spacebar</kbd> + <kbd>s</kbd> Lasso tool</div>
+                     <div><kbd>spacebar</kbd> + <kbd>a</kbd> Select/deselect all</div>
+                     <div><kbd>spacebar</kbd> + <kbd>u</kbd> Deselect all</div>
+                     <div><kbd>spacebar</kbd> + <kbd>Del</kbd> Drop selected</div>
+                     <div><kbd>spacebar</kbd> + <kbd>e</kbd> Select neighbors</div>
+                     <div><kbd>spacebar</kbd> + <kbd>i</kbd> Select isolated</div>
+                     <div><kbd>spacebar</kbd> + <kbd>l</kbd> Select leaf</div>
+                     </div>
+                     </div>*/}
+                </div>
             </div>
         );
     }
-
-    renderFilterPanel = () => (
-        <div id="nodeSizePanel" style={{position: 'absolute', right: '10px', bottom: 0, width: '240px', height: '130px'}} className="card">
-            <div className="card-block">
-                <h6 className="card-title">Filter</h6>
-                    <div className="row small">
-                        <label htmlFor="frequency-filter" style={{width: 70, marginBottom: 2}}>frequency</label>
-                        <input id="frequency-filter" type="range" value={this.state.frequencyFilter} max={this.getRange(this.frequencyFn).mx} style={{height: 10}}
-                               onChange={(e) => this.setState({frequencyFilter: e.target.value})}/>
-                        <span style={{marginLeft: 5}}>{this.state.frequencyFilter}</span>
-                    </div>
-                    <div className="row small">
-                        <label htmlFor="spread-filter" style={{width: 70, marginBottom: 2}}>spread</label>
-                        <input id="spread-filter" type="range" value={this.state.spreadFilter} max={this.getRange(this.spreadFn).mx} style={{height: 10}}
-                               onChange={(e) => this.setState({spreadFilter: e.target.value})}/>
-                        <span style={{marginLeft: 5}}>{this.state.spreadFilter}</span>
-                    </div>
-                    <div className="row small">
-                        <label htmlFor="score-filter" style={{width: 70, marginBottom: 2}}>score</label>
-                        <input id="score-filter" type="range" value={this.state.scoreFilter} max={this.getRange(this.scoreFn).mx} style={{height: 10}}
-                               onChange={(e) => this.setState({scoreFilter: e.target.value})}/>
-                        <span style={{marginLeft: 5}}>{this.state.scoreFilter}</span>
-                    </div>
-            </div>
-        </div>
-    );
 
     renderSizeMenu = () => (
         <div id="nodeSizePanel" style={{position: 'absolute', left: '10px', bottom: 0, width: '150px', height: '130px'}} className="card">
