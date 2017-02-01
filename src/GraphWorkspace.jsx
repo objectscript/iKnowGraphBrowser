@@ -17,9 +17,9 @@ export default class GraphWorkspace extends React.PureComponent {
         },
     };
 
-    componentDidUpdate(prevProps, prevState) {
-        if (this.props.graph != prevProps.graph) {
-            this.setState({selectedNodes:[]})
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.graph !== this.props.graph) {
+            this.setState({selectedNodes:[]});
         }
     }
 
