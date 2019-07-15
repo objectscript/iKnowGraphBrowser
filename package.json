@@ -6,7 +6,7 @@
   "dependencies": {
     "file-saver": "^1.3.3",
     "linkurious": "^1.5.2",
-    "lodash": "^4.13.1",
+    "lodash": "^4.17.13",
     "react": "15.3.2",
     "react-dom": "15.3.2"
   },
